@@ -1,0 +1,214 @@
+syntax = "proto3";
+
+package radioactive_foot_pi.schemas;
+
+import "google/protobuf/timestamp.proto";
+
+/**
+ * Virtual Forest Topology Schema
+ * Defines distributed node architecture and forest structure
+ */
+
+message ForestNode {
+  // Unique node identifier
+  string node_id = 1;
+  
+  // Node hostname/IP
+  string node_address = 2;
+  
+  // Node port
+  uint32 node_port = 3;
+  
+  // Parent node ID (for tree structure)
+  string parent_node_id = 4;
+  
+  // Child node IDs
+  repeated string child_node_ids = 5;
+  
+  // Node status
+  NodeStatus status = 6;
+  
+  // Node role in forest
+  NodeRole role = 7;
+  
+  // Node capacity (max microprocesses)
+  uint32 capacity = 8;
+  
+  // Current load (active microprocesses)
+  uint32 current_load = 9;
+  
+  // Node registration timestamp
+  google.protobuf.Timestamp registered_at = 10;
+  
+  // Last heartbeat timestamp
+  google.protobuf.Timestamp last_heartbeat = 11;
+  
+  // Node version
+  string version = 12;
+  
+  // Node metadata
+  map<string, string> metadata = 13;
+  
+  // Resource specifications
+  NodeResources resources = 14;
+  
+  // Node health metrics
+  NodeHealth health = 15;
+}
+
+enum NodeStatus {
+  UNKNOWN = 0;
+  HEALTHY = 1;
+  DEGRADED = 2;
+  UNHEALTHY = 3;
+  OFFLINE = 4;
+  STARTING = 5;
+  STOPPING = 6;
+}
+
+enum NodeRole {
+  LEAF = 0;
+  BRANCH = 1;
+  ROOT = 2;
+  COORDINATOR = 3;
+}
+
+message NodeResources {
+  // CPU cores
+  uint32 cpu_cores = 1;
+  
+  // Total memory in GB
+  uint32 memory_gb = 2;
+  
+  // Disk space in GB
+  uint32 disk_gb = 3;
+  
+  // Network bandwidth in Mbps
+  uint32 bandwidth_mbps = 4;
+}
+
+message NodeHealth {
+  // CPU usage percentage
+  float cpu_usage_percent = 1;
+  
+  // Memory usage percentage
+  float memory_usage_percent = 2;
+  
+  // Disk usage percentage
+  float disk_usage_percent = 3;
+  
+  // Network latency to parent (ms)
+  float latency_to_parent_ms = 4;
+  
+  // Packet loss percentage
+  float packet_loss_percent = 5;
+  
+  // Uptime in seconds
+  uint64 uptime_seconds = 6;
+  
+  // Health score (0-100)
+  uint32 health_score = 7;
+  
+  // Last health check timestamp
+  google.protobuf.Timestamp last_health_check = 8;
+}
+
+message ForestTopology {
+  // Forest identifier
+  string forest_id = 1;
+  
+  // Total nodes in forest
+  uint32 total_nodes = 2;
+  
+  // All nodes
+  repeated ForestNode nodes = 3;
+  
+  // Root node ID
+  string root_node_id = 4;
+  
+  // Forest depth
+  uint32 forest_depth = 5;
+  
+  // Average node load
+  float average_load = 6;
+  
+  // Topology creation timestamp
+  google.protobuf.Timestamp created_at = 7;
+  
+  // Last topology update
+  google.protobuf.Timestamp last_updated = 8;
+}
+
+message NodeConnection {
+  // Source node ID
+  string source_node_id = 1;
+  
+  // Destination node ID
+  string destination_node_id = 2;
+  
+  // Connection latency (ms)
+  float latency_ms = 3;
+  
+  // Connection bandwidth (Mbps)
+  float bandwidth_mbps = 4;
+  
+  // Packet loss percentage
+  float packet_loss_percent = 5;
+  
+  // Connection status
+  ConnectionStatus status = 6;
+  
+  // Last update timestamp
+  google.protobuf.Timestamp last_updated = 7;
+}
+
+enum ConnectionStatus {
+  UNKNOWN = 0;
+  CONNECTED = 1;
+  DISCONNECTED = 2;
+  DEGRADED = 3;
+  UNREACHABLE = 4;
+}
+
+message ForestEvent {
+  // Event identifier
+  string event_id = 1;
+  
+  // Event type
+  ForestEventType event_type = 2;
+  
+  // Node ID involved
+  string node_id = 3;
+  
+  // Event timestamp
+  google.protobuf.Timestamp timestamp = 4;
+  
+  // Event description
+  string description = 5;
+  
+  // Event severity
+  EventSeverity severity = 6;
+  
+  // Event data
+  map<string, string> data = 7;
+}
+
+enum ForestEventType {
+  UNKNOWN = 0;
+  NODE_JOINED = 1;
+  NODE_LEFT = 2;
+  NODE_HEALTH_DEGRADED = 3;
+  NODE_RECOVERED = 4;
+  CONNECTION_LOST = 5;
+  CONNECTION_RESTORED = 6;
+  TOPOLOGY_CHANGED = 7;
+  REBALANCING_STARTED = 8;
+  REBALANCING_COMPLETED = 9;
+}
+
+enum EventSeverity {
+  INFO = 0;
+  WARNING = 1;
+  ERROR = 2;
+  CRITICAL = 3;
+}
