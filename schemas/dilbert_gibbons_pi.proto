@@ -1,0 +1,466 @@
+syntax = "proto3";
+
+package radioactive_foot_pi.schemas;
+
+import "google/protobuf/timestamp.proto";
+
+/**
+ * Dilbert Gibbons PI Specification
+ * Traditional Pi (π) computer architecture implemented over RF
+ * Interactive instruction execution with real-time control
+ */
+
+// ============================================================================
+// CORE REGISTERS
+// ============================================================================
+
+message RegisterFile {
+  // General Purpose Registers (R0-R31)
+  repeated uint64 general_registers = 1;
+  
+  // Program Counter
+  uint64 program_counter = 2;
+  
+  // Stack Pointer
+  uint64 stack_pointer = 3;
+  
+  // Base Pointer
+  uint64 base_pointer = 4;
+  
+  // Flags Register
+  uint32 flags = 5;
+  
+  // Instruction Pointer
+  uint64 instruction_pointer = 6;
+}
+
+// ============================================================================
+// INSTRUCTION SET ARCHITECTURE
+// ============================================================================
+
+message Instruction {
+  // Opcode (0-255)
+  uint32 opcode = 1;
+  
+  // Operand type
+  OperandType operand_type = 2;
+  
+  // Up to 3 operands
+  repeated Operand operands = 3;
+  
+  // Immediate value (if applicable)
+  uint64 immediate = 4;
+  
+  // Instruction flags
+  uint32 flags = 5;
+  
+  // Condition code
+  ConditionCode condition = 6;
+}
+
+enum OperandType {
+  UNKNOWN = 0;
+  REGISTER = 1;
+  IMMEDIATE = 2;
+  MEMORY = 3;
+  INDIRECT = 4;
+  INDEXED = 5;
+  DISPLACEMENT = 6;
+}
+
+message Operand {
+  OperandType type = 1;
+  string register_name = 2;
+  uint64 value = 3;
+  uint64 address = 4;
+  uint32 index_register = 5;
+  int32 displacement = 6;
+}
+
+enum ConditionCode {
+  NONE = 0;
+  EQUAL = 1;
+  NOT_EQUAL = 2;
+  GREATER = 3;
+  LESS = 4;
+  GREATER_EQUAL = 5;
+  LESS_EQUAL = 6;
+  OVERFLOW = 7;
+  CARRY = 8;
+  ZERO = 9;
+}
+
+// ============================================================================
+// OPCODE DEFINITIONS (256 Instructions)
+// ============================================================================
+
+enum Opcode {
+  // Data Movement (0x00-0x0F)
+  NOP = 0x00;
+  MOV = 0x01;
+  LD = 0x02;
+  ST = 0x03;
+  LDI = 0x04;
+  LDHI = 0x05;
+  
+  // Arithmetic Operations (0x10-0x1F)
+  ADD = 0x10;
+  SUB = 0x11;
+  MUL = 0x12;
+  DIV = 0x13;
+  MOD = 0x14;
+  INC = 0x15;
+  DEC = 0x16;
+  NEG = 0x17;
+  
+  // Bitwise Operations (0x20-0x2F)
+  AND = 0x20;
+  OR = 0x21;
+  XOR = 0x22;
+  NOT = 0x23;
+  SHL = 0x24;
+  SHR = 0x25;
+  ROL = 0x26;
+  ROR = 0x27;
+  POPCOUNT = 0x28;
+  CLZ = 0x29;
+  
+  // Comparison & Branching (0x30-0x3F)
+  CMP = 0x30;
+  JMP = 0x31;
+  JEQ = 0x32;
+  JNE = 0x33;
+  JGT = 0x34;
+  JLT = 0x35;
+  JGE = 0x36;
+  JLE = 0x37;
+  CALL = 0x38;
+  RET = 0x39;
+  
+  // Floating Point (0x40-0x4F)
+  FADD = 0x40;
+  FSUB = 0x41;
+  FMUL = 0x42;
+  FDIV = 0x43;
+  SQRT = 0x44;
+  FSIN = 0x45;
+  FCOS = 0x46;
+  FTAN = 0x47;
+  FLOG = 0x48;
+  FEXP = 0x49;
+  
+  // Vector Operations (0x50-0x5F)
+  VADD = 0x50;
+  VSUB = 0x51;
+  VMUL = 0x52;
+  VDIV = 0x53;
+  VDOT = 0x54;
+  VCROSS = 0x55;
+  VNORM = 0x56;
+  
+  // Stack Operations (0x60-0x6F)
+  PUSH = 0x60;
+  POP = 0x61;
+  PUSHALL = 0x62;
+  POPALL = 0x63;
+  
+  // Memory Operations (0x70-0x7F)
+  ALLOC = 0x70;
+  FREE = 0x71;
+  MEMCPY = 0x72;
+  MEMSET = 0x73;
+  MEMCMP = 0x74;
+  
+  // Atomic Operations (0x80-0x8F)
+  ATOMIC_ADD = 0x80;
+  ATOMIC_SUB = 0x81;
+  ATOMIC_AND = 0x82;
+  ATOMIC_OR = 0x83;
+  ATOMIC_XOR = 0x84;
+  CAS = 0x85;
+  
+  // String Operations (0x90-0x9F)
+  STRLEN = 0x90;
+  STRCMP = 0x91;
+  STRCPY = 0x92;
+  STRCAT = 0x93;
+  SUBSTR = 0x94;
+  
+  // I/O Operations (0xA0-0xAF)
+  INPUT = 0xA0;
+  OUTPUT = 0xA1;
+  RF_SEND = 0xA2;
+  RF_RECV = 0xA3;
+  
+  // System Operations (0xB0-0xBF)
+  HALT = 0xB0;
+  INTERRUPT = 0xB1;
+  SYSCALL = 0xB2;
+  SETFLAGS = 0xB3;
+  GETFLAGS = 0xB4;
+  
+  // Extended Operations (0xC0-0xFF)
+  EXTENDED = 0xC0;
+}
+
+// ============================================================================
+// MEMORY MANAGEMENT
+// ============================================================================
+
+message MemorySegment {
+  // Segment name
+  string name = 1;
+  
+  // Start address
+  uint64 start_address = 2;
+  
+  // Size in bytes
+  uint64 size = 3;
+  
+  // Protection flags
+  uint32 protection_flags = 4;
+  
+  // Read permission
+  bool readable = 5;
+  
+  // Write permission
+  bool writable = 6;
+  
+  // Execute permission
+  bool executable = 7;
+  
+  // Cached/Mapped
+  bool cached = 8;
+}
+
+message MemoryPage {
+  // Page number
+  uint64 page_number = 1;
+  
+  // Physical address
+  uint64 physical_address = 2;
+  
+  // Virtual address
+  uint64 virtual_address = 3;
+  
+  // Page data (4KB)
+  bytes data = 4;
+  
+  // Dirty flag
+  bool dirty = 5;
+  
+  // Valid flag
+  bool valid = 6;
+  
+  // Accessed flag
+  bool accessed = 7;
+}
+
+message MemoryState {
+  // Total memory size
+  uint64 total_memory = 1;
+  
+  // Used memory
+  uint64 used_memory = 2;
+  
+  // Free memory
+  uint64 free_memory = 3;
+  
+  // Segments
+  repeated MemorySegment segments = 4;
+  
+  // Pages
+  repeated MemoryPage pages = 5;
+  
+  // TLB (Translation Lookaside Buffer)
+  repeated TLBEntry tlb_entries = 6;
+}
+
+message TLBEntry {
+  // Virtual address
+  uint64 virtual_address = 1;
+  
+  // Physical address
+  uint64 physical_address = 2;
+  
+  // Page size
+  uint32 page_size = 3;
+  
+  // Last accessed
+  google.protobuf.Timestamp last_accessed = 4;
+}
+
+// ============================================================================
+// EXECUTION STATE
+// ============================================================================
+
+message ExecutionContext {
+  // Context ID
+  string context_id = 1;
+  
+  // Register file
+  RegisterFile registers = 2;
+  
+  // Memory state
+  MemoryState memory = 3;
+  
+  // Call stack
+  repeated StackFrame call_stack = 4;
+  
+  // Execution state
+  ExecutionState state = 5;
+  
+  // Cycle count
+  uint64 cycle_count = 6;
+  
+  // Instruction count
+  uint64 instruction_count = 7;
+  
+  // Context creation time
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message StackFrame {
+  // Return address
+  uint64 return_address = 1;
+  
+  // Frame pointer
+  uint64 frame_pointer = 2;
+  
+  // Local variables
+  map<string, uint64> local_vars = 3;
+  
+  // Function name
+  string function_name = 4;
+}
+
+enum ExecutionState {
+  UNKNOWN = 0;
+  RUNNING = 1;
+  PAUSED = 2;
+  HALTED = 3;
+  TRAPPED = 4;
+  EXCEPTION = 5;
+}
+
+// ============================================================================
+// INSTRUCTION EXECUTION
+// ============================================================================
+
+message InstructionExecutionRequest {
+  // Instruction to execute
+  Instruction instruction = 1;
+  
+  // Current context
+  ExecutionContext context = 2;
+  
+  // Execution parameters
+  map<string, string> parameters = 3;
+}
+
+message InstructionExecutionResult {
+  // Execution status
+  ExecutionStatus status = 1;
+  
+  // Updated context
+  ExecutionContext updated_context = 2;
+  
+  // Result value
+  uint64 result = 3;
+  
+  // Flag updates
+  uint32 updated_flags = 4;
+  
+  // Execution time (cycles)
+  uint32 execution_cycles = 5;
+  
+  // Error message
+  string error_message = 6;
+  
+  // Exceptions raised
+  repeated string exceptions = 7;
+  
+  // Side effects
+  map<string, string> side_effects = 8;
+}
+
+enum ExecutionStatus {
+  UNKNOWN = 0;
+  SUCCESS = 1;
+  INVALID_INSTRUCTION = 2;
+  INVALID_OPERAND = 3;
+  MEMORY_FAULT = 4;
+  DIVIDE_BY_ZERO = 5;
+  OVERFLOW = 6;
+  UNDERFLOW = 7;
+  PRIVILEGE_VIOLATION = 8;
+  UNKNOWN_ERROR = 9;
+}
+
+// ============================================================================
+// CONTROL FLOW
+// ============================================================================
+
+message ControlFlowTrace {
+  // Trace ID
+  string trace_id = 1;
+  
+  // Execution sequence
+  repeated TraceEntry entries = 2;
+  
+  // Total instructions
+  uint64 total_instructions = 3;
+  
+  // Branches taken
+  uint32 branches_taken = 4;
+  
+  // Jumps executed
+  uint32 jumps_executed = 5;
+}
+
+message TraceEntry {
+  // Instruction address
+  uint64 address = 1;
+  
+  // Instruction
+  Instruction instruction = 2;
+  
+  // Register state before
+  RegisterFile registers_before = 3;
+  
+  // Register state after
+  RegisterFile registers_after = 4;
+  
+  // Execution time
+  uint32 execution_time_ns = 5;
+}
+
+// ============================================================================
+// PERFORMANCE METRICS
+// ============================================================================
+
+message PIPerformanceMetrics {
+  // Total cycles
+  uint64 total_cycles = 1;
+  
+  // Instructions executed
+  uint64 instructions_executed = 2;
+  
+  // Cycles per instruction (CPI)
+  float cpi = 3;
+  
+  // Instructions per cycle (IPC)
+  float ipc = 4;
+  
+  // Cache hit rate
+  float cache_hit_rate = 5;
+  
+  // Branch prediction accuracy
+  float branch_prediction_accuracy = 6;
+  
+  // Memory latency (ns)
+  float memory_latency_ns = 7;
+  
+  // ALU utilization
+  float alu_utilization = 8;
+}
