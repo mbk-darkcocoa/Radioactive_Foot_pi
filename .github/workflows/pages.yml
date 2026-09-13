@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
+      - .github/**
       - docs/**
       - common/**
       - dark-cocoa-dc/**
       - schemas/**
       - README.md
-      - .github/workflows/pages.yml
   workflow_dispatch:
 
 permissions:

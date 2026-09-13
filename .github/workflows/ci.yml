@@ -52,6 +52,7 @@ jobs:
           for proto_file in ${{ matrix.path }}/*.proto; do
             python -m grpc_tools.protoc \
               -I "${PROTO_INCLUDE}" \
+              -I . \
               -I "${{ matrix.path }}" \
               --descriptor_set_out="/tmp/$(basename "${proto_file}").pb" \
               "${proto_file}"
