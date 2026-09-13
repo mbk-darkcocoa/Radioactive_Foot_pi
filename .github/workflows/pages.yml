@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - docs/**
-      - common/**
-      - dark-cocoa-dc/**
-      - schemas/**
-      - README.md
   workflow_dispatch:
 
 permissions:
