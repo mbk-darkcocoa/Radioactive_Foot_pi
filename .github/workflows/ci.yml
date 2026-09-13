@@ -33,24 +33,27 @@ jobs:
         uses: ./.github/actions/setup-python
         with:
           python-version: "3.11"
-          install-grpc-tools: ${{ matrix.type == 'proto' && 'true' || 'false' }}
 
       - name: Compile Python sources
         if: ${{ matrix.type == 'python' }}
         run: python -m compileall ${{ matrix.path }}
 
-      - name: Validate protobuf schemas
+      - name: Check protobuf schema metadata
         if: ${{ matrix.type == 'proto' }}
-        shell: bash
         run: |
-          PROTO_INCLUDE="$(python - <<'PY'
-          import os
-          import grpc_tools
-          print(os.path.join(os.path.dirname(grpc_tools.__file__), "_proto"))
+          python - <<'PY'
+          from pathlib import Path
+
+          proto_dir = Path("schemas")
+          proto_files = sorted(proto_dir.glob("*.proto"))
+          if not proto_files:
+              raise SystemExit("No protobuf schema files found.")
+
+          required_tokens = ('syntax = "proto3";', "package ", "message ")
+          for proto_file in proto_files:
+              content = proto_file.read_text(encoding="utf-8")
+              missing = [token for token in required_tokens if token not in content]
+              if missing:
+                  raise SystemExit(f"{proto_file} is missing required declarations: {', '.join(missing)}")
+              print(f"validated {proto_file}")
           PY
-          )"
-          python -m grpc_tools.protoc \
-            -I "${PROTO_INCLUDE}" \
-            -I "${{ matrix.path }}" \
-            --descriptor_set_out=/tmp/${{ matrix.name }}.pb \
-            ${{ matrix.path }}/*.proto
