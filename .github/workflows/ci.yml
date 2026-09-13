@@ -44,12 +44,7 @@ jobs:
         shell: bash
         run: |
           shopt -s nullglob
-          PROTO_INCLUDE="$(python - <<'PY'
-          import os
-          import grpc_tools
-          print(os.path.join(os.path.dirname(grpc_tools.__file__), "_proto"))
-          PY
-          )"
+          PROTO_INCLUDE="$(python -c 'import os, grpc_tools; print(os.path.join(os.path.dirname(grpc_tools.__file__), "_proto"))')"
           proto_files=(${{ matrix.path }}/*.proto)
           if [ ${#proto_files[@]} -eq 0 ]; then
             echo "No protobuf schema files found in ${{ matrix.path }}"
