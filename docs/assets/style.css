@@ -7,6 +7,13 @@ body {
 
 a {
   color: #7dd3fc;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+a:hover,
+a:focus {
+  color: #bae6fd;
 }
 
 header,
