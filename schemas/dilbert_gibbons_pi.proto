@@ -59,7 +59,7 @@ message Instruction {
 }
 
 enum OperandType {
-  UNKNOWN = 0;
+  OPERAND_TYPE_UNKNOWN = 0;
   REGISTER = 1;
   IMMEDIATE = 2;
   MEMORY = 3;
@@ -85,7 +85,7 @@ enum ConditionCode {
   LESS = 4;
   GREATER_EQUAL = 5;
   LESS_EQUAL = 6;
-  OVERFLOW = 7;
+  CONDITION_OVERFLOW = 7;
   CARRY = 8;
   ZERO = 9;
 }
@@ -335,7 +335,7 @@ message StackFrame {
 }
 
 enum ExecutionState {
-  UNKNOWN = 0;
+  EXECUTION_STATE_UNKNOWN = 0;
   RUNNING = 1;
   PAUSED = 2;
   HALTED = 3;
@@ -385,13 +385,13 @@ message InstructionExecutionResult {
 }
 
 enum ExecutionStatus {
-  UNKNOWN = 0;
+  EXECUTION_STATUS_UNKNOWN = 0;
   SUCCESS = 1;
   INVALID_INSTRUCTION = 2;
   INVALID_OPERAND = 3;
   MEMORY_FAULT = 4;
   DIVIDE_BY_ZERO = 5;
-  OVERFLOW = 6;
+  EXECUTION_OVERFLOW = 6;
   UNDERFLOW = 7;
   PRIVILEGE_VIOLATION = 8;
   UNKNOWN_ERROR = 9;

@@ -1,0 +1,60 @@
+name: Repository validation
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: common
+            type: python
+            path: common
+          - name: dark-cocoa-dc
+            type: python
+            path: dark-cocoa-dc
+          - name: schemas
+            type: proto
+            path: schemas
+    name: Validate ${{ matrix.name }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up shared tooling
+        uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.11"
+          install-grpc-tools: ${{ matrix.type == 'proto' && 'true' || 'false' }}
+
+      - name: Compile Python sources
+        if: ${{ matrix.type == 'python' }}
+        run: python -m compileall ${{ matrix.path }}
+
+      - name: Validate protobuf schemas
+        if: ${{ matrix.type == 'proto' }}
+        shell: bash
+        run: |
+          shopt -s nullglob
+          PROTO_INCLUDE="$(python -c 'import os, grpc_tools; print(os.path.join(os.path.dirname(grpc_tools.__file__), "_proto"))')"
+          proto_files=(${{ matrix.path }}/*.proto)
+          if [ ${#proto_files[@]} -eq 0 ]; then
+            echo "No protobuf schema files found in ${{ matrix.path }}"
+            exit 1
+          fi
+          for proto_file in "${proto_files[@]}"; do
+            python -m grpc_tools.protoc \
+              -I "${PROTO_INCLUDE}" \
+              -I . \
+              -I "${{ matrix.path }}" \
+              --descriptor_set_out="/tmp/$(basename "${proto_file}").pb" \
+              "${proto_file}"
+          done
