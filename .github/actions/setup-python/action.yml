@@ -1,0 +1,26 @@
+name: Setup Python project environment
+description: Prepare Python and optional protobuf tooling for repository workflows.
+inputs:
+  python-version:
+    description: Python version to install.
+    required: false
+    default: "3.11"
+  install-grpc-tools:
+    description: Install grpcio-tools for protobuf validation.
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+    - name: Upgrade pip
+      shell: bash
+      run: python -m pip install --upgrade pip
+    - name: Install protobuf tooling
+      if: ${{ inputs.install-grpc-tools == 'true' }}
+      shell: bash
+      run: python -m pip install grpcio-tools

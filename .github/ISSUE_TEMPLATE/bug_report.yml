@@ -1,0 +1,56 @@
+name: Bug report
+description: Report a defect in one of the repository projects.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: project
+    attributes:
+      label: Project area
+      description: Which project area is affected?
+      options:
+        - common
+        - dark-cocoa-dc
+        - schemas
+        - docs/github
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the bug and the impact.
+      placeholder: A concise summary of the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: List the steps needed to reproduce the issue.
+      placeholder: |
+        1. Go to ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What should happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include logs, screenshots, or related links if helpful.

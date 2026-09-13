@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest an enhancement for one of the repository projects.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: project
+    attributes:
+      label: Project area
+      description: Which project area should be improved?
+      options:
+        - common
+        - dark-cocoa-dc
+        - schemas
+        - docs/github
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What need or pain point does this request address?
+      placeholder: Describe the problem to solve.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the desired behavior or change.
+      placeholder: Describe the requested improvement.
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Success criteria
+      description: What should be true when this is complete?
+      placeholder: Define the expected outcome.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Add references, examples, or related issues.
