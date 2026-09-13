@@ -57,9 +57,9 @@ message ForestNode {
 }
 
 enum NodeStatus {
-  UNKNOWN = 0;
+  NODE_STATUS_UNKNOWN = 0;
   HEALTHY = 1;
-  DEGRADED = 2;
+  NODE_STATUS_DEGRADED = 2;
   UNHEALTHY = 3;
   OFFLINE = 4;
   STARTING = 5;
@@ -163,10 +163,10 @@ message NodeConnection {
 }
 
 enum ConnectionStatus {
-  UNKNOWN = 0;
+  CONNECTION_STATUS_UNKNOWN = 0;
   CONNECTED = 1;
   DISCONNECTED = 2;
-  DEGRADED = 3;
+  CONNECTION_STATUS_DEGRADED = 3;
   UNREACHABLE = 4;
 }
 
@@ -194,7 +194,7 @@ message ForestEvent {
 }
 
 enum ForestEventType {
-  UNKNOWN = 0;
+  FOREST_EVENT_UNKNOWN = 0;
   NODE_JOINED = 1;
   NODE_LEFT = 2;
   NODE_HEALTH_DEGRADED = 3;
