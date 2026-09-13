@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - docs/**
+      - common/**
+      - dark-cocoa-dc/**
+      - schemas/**
+      - README.md
       - .github/workflows/pages.yml
   workflow_dispatch:
 
