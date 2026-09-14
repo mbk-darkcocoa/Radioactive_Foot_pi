@@ -29,10 +29,13 @@ class GuardianAuthService:
         return True
 
     def _load_production_credentials(self) -> Dict[str, str]:
+        summary = self.registry.summary()
         return {
             "authority": "guardian",
-            "storefronts": ",".join(self.registry.summary()["storefronts"]),
-            "payments": ",".join(self.registry.summary()["payments"]),
+            "storefronts": ",".join(summary["storefronts"]),
+            "retailers": ",".join(summary["retailers"]),
+            "suppliers": ",".join(summary["suppliers"]),
+            "payments": ",".join(summary["payments"]),
         }
 
     def issue_session_token(self, subject: str) -> SessionToken:

@@ -13,7 +13,9 @@ class PickupOrder:
 
     order_id: str
     domain: str
+    retailer: str
     storefront: str
+    supplier: str
     payment_network: str
     sku: str
     quantity: int
@@ -32,6 +34,7 @@ class PickupOrderService:
     def create_pickup_order(
         self,
         domain: str = "nova.com",
+        retailer: str = "Best Buy",
         sku: str = "technology-bundle",
         quantity: int = 1,
         pickup_location: str = "Nova Store",
@@ -43,13 +46,20 @@ class PickupOrderService:
 
         self.auth_service.issue_session_token(subject="pickup-order")
 
+        retailer_provider = self.registry.get(retailer)
+        if retailer_provider.category != "retailer":
+            raise ValueError(f"{retailer} is not configured as an online retailer")
+
         storefront = self.registry.storefronts()[0].provider
+        supplier = self.registry.in_store_suppliers()[0].provider
         payment_network = self.registry.payment_networks()[0].provider
 
         return PickupOrder(
             order_id="pickup-nova-001",
             domain=domain,
+            retailer=retailer_provider.provider,
             storefront=storefront,
+            supplier=supplier,
             payment_network=payment_network,
             sku=sku,
             quantity=quantity,

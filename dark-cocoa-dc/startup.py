@@ -65,10 +65,12 @@ def main():
         from dark_cocoa.purchase import PickupOrderService
 
         pickup_orders = PickupOrderService(auth)
-        order = pickup_orders.create_pickup_order()
+        order = pickup_orders.create_pickup_order(retailer="Best Buy")
         print(f"✓ Pickup order created: {order.order_id}")
         print(f"  - Domain: {order.domain}")
+        print(f"  - Retailer: {order.retailer}")
         print(f"  - Storefront: {order.storefront}")
+        print(f"  - In-Store Supplier: {order.supplier}")
         print(f"  - Payment Network: {order.payment_network}")
         print(f"  - SKU: {order.sku}")
         print(f"  - Quantity: {order.quantity}")
