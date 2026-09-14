@@ -17,7 +17,9 @@ The Dark Cocoa runtime now ships with a local \texttt{dark\_cocoa} Python packag
 \section*{Modules}
 \begin{itemize}
   \item \texttt{auth.py}: defines \texttt{GuardianAuthService} and immutable session token metadata.
+  \item \texttt{certificate\_registry.py}: stores the approved PEM certificate metadata for \texttt{nova.com}.
   \item \texttt{commerce.py}: records normalized integration metadata for Shopify, Wix, Visa, and Mastercard.
+  \item \texttt{purchase.py}: creates deterministic in-store pickup orders for approved domains.
   \item \texttt{vision\_language.py}: defines \texttt{DarkCocoaVLM} and deterministic model status data.
   \item \texttt{reactive.py}: defines \texttt{ReactiveEngine} and its stream topology.
   \item \texttt{compute.py}: defines \texttt{CloudComputeManager} and a deterministic compute profile.
@@ -28,6 +30,7 @@ The Dark Cocoa runtime now ships with a local \texttt{dark\_cocoa} Python packag
   \item Shopify is represented as a Python SDK-backed storefront integration target.
   \item Wix is represented as an HTTP API storefront integration target.
   \item Visa and Mastercard are represented as payment-network integration targets.
+  \item \texttt{nova.com} is stored in the certificate registry and must be present before a pickup order is created.
 \end{itemize}
 
 \end{document}

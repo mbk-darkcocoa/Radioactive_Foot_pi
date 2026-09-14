@@ -60,6 +60,20 @@ def main():
         from dark_cocoa.compute import CloudComputeManager
         compute = CloudComputeManager()
         print("✓ Cloud compute initialized (PALO ALTO LIVE)")
+
+        print("\n[ORDER] Retrying in-store pickup purchase...")
+        from dark_cocoa.purchase import PickupOrderService
+
+        pickup_orders = PickupOrderService(auth)
+        order = pickup_orders.create_pickup_order()
+        print(f"✓ Pickup order created: {order.order_id}")
+        print(f"  - Domain: {order.domain}")
+        print(f"  - Storefront: {order.storefront}")
+        print(f"  - Payment Network: {order.payment_network}")
+        print(f"  - SKU: {order.sku}")
+        print(f"  - Quantity: {order.quantity}")
+        print(f"  - Pickup Location: {order.pickup_location}")
+        print(f"  - Status: {order.pickup_status}")
         
         print("""
         ╔══════════════════════════════════════════════════════════╗
