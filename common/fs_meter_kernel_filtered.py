@@ -52,6 +52,8 @@ BPF_PROGRAM = r"""
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/limits.h>
+#include <linux/mnt_namespace.h>
+#include <linux/nsproxy.h>
 #include <linux/path.h>
 #include <linux/sched.h>
 
@@ -68,11 +70,15 @@ struct event_t {
     u64 dir_dev;
     u64 dir_ino;
     u64 file_ino;
+    u64 mnt_ns_inum;
+    u64 root_mnt_ns_inum;
+    u32 billing_milliunits;
     char comm[TASK_COMM_LEN];
     char filename[FILE_NAME_LEN];
 };
 
 BPF_HASH(watched_dirs, struct watch_key_t, u8, 4096);
+BPF_ARRAY(root_mount_ns, u64, 1);
 BPF_PERF_OUTPUT(events);
 
 int trace_vfs_open(struct pt_regs *ctx, struct path *path, struct file *file)
@@ -82,8 +88,13 @@ int trace_vfs_open(struct pt_regs *ctx, struct path *path, struct file *file)
     struct inode *dir_inode = NULL;
     struct inode *inode = NULL;
     struct super_block *sb = NULL;
+    struct task_struct *task = NULL;
+    struct nsproxy *nsproxy = NULL;
+    struct mnt_namespace *mnt_ns = NULL;
     struct watch_key_t key = {};
     u8 *enabled;
+    u32 idx = 0;
+    u64 *root_mnt_ns;
     struct event_t event = {};
     u64 pid_tgid = bpf_get_current_pid_tgid();
 
@@ -124,6 +135,25 @@ int trace_vfs_open(struct pt_regs *ctx, struct path *path, struct file *file)
     event.dir_dev = key.dev;
     event.dir_ino = key.ino;
     bpf_probe_read_kernel(&event.file_ino, sizeof(event.file_ino), &inode->i_ino);
+    task = (struct task_struct *)bpf_get_current_task();
+    if (task) {
+        bpf_probe_read_kernel(&nsproxy, sizeof(nsproxy), &task->nsproxy);
+    }
+    if (nsproxy) {
+        bpf_probe_read_kernel(&mnt_ns, sizeof(mnt_ns), &nsproxy->mnt_ns);
+    }
+    if (mnt_ns) {
+        bpf_probe_read_kernel(&event.mnt_ns_inum, sizeof(event.mnt_ns_inum), &mnt_ns->ns.inum);
+    }
+    root_mnt_ns = root_mount_ns.lookup(&idx);
+    if (root_mnt_ns) {
+        event.root_mnt_ns_inum = *root_mnt_ns;
+    }
+    if (event.root_mnt_ns_inum &&
+        event.mnt_ns_inum &&
+        event.mnt_ns_inum != event.root_mnt_ns_inum) {
+        event.billing_milliunits = 175;
+    }
     bpf_get_current_comm(&event.comm, sizeof(event.comm));
     bpf_probe_read_kernel_str(&event.filename, sizeof(event.filename), dentry->d_name.name);
     events.perf_submit(ctx, &event, sizeof(event));
@@ -147,6 +177,9 @@ class Event(ct.Structure):
         ("dir_dev", ct.c_ulonglong),
         ("dir_ino", ct.c_ulonglong),
         ("file_ino", ct.c_ulonglong),
+        ("mnt_ns_inum", ct.c_ulonglong),
+        ("root_mnt_ns_inum", ct.c_ulonglong),
+        ("billing_milliunits", ct.c_uint),
         ("comm", ct.c_char * 16),
         ("filename", ct.c_char * 256),
     ]
@@ -181,6 +214,12 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         type=int,
         default=1000,
         help="perf buffer poll timeout in milliseconds.",
+    )
+    parser.add_argument(
+        "--root-mnt-ns-inum",
+        type=int,
+        default=0,
+        help="Root mount namespace inode for sandbox billing checks. Auto-detected from /proc/1/ns/mnt when unset.",
     )
     return parser.parse_args(argv)
 
@@ -235,9 +274,20 @@ def load_watch_directories(watch_table, directories: Sequence[str]) -> Dict[Tupl
     return loaded
 
 
+def resolve_root_mount_namespace_inode(cli_value: int) -> int:
+    if cli_value > 0:
+        return cli_value
+    return int(os.stat("/proc/1/ns/mnt", follow_symlinks=False).st_ino)
+
+
+def load_root_mount_namespace(root_mount_ns_table, namespace_inode: int) -> None:
+    root_mount_ns_table[ct.c_int(0)] = ct.c_ulonglong(namespace_inode)
+    LOGGER.info("Configured root mount namespace inode: %d", namespace_inode)
+
+
 def start_metrics(metrics_port: int):
     if metrics_port <= 0:
-        return None, None
+        return None, None, None
     if not all((Counter, Gauge, start_http_server)):
         raise RuntimeError("prometheus_client is required when --metrics-port is enabled.")
 
@@ -250,8 +300,12 @@ def start_metrics(metrics_port: int):
         "fs_meter_watched_directories",
         "Directory inode/device pairs loaded into the BPF watch map.",
     )
+    billing_counter = Counter(
+        "fs_meter_off_device_billing_milliunits_total",
+        "Total milliunits billed for mount namespace mismatches.",
+    )
     LOGGER.info("Prometheus metrics exposed on port %d", metrics_port)
-    return opens_counter, watched_gauge
+    return opens_counter, watched_gauge, billing_counter
 
 
 def build_kafka_producer(bootstrap_servers: str):
@@ -275,6 +329,7 @@ def decode_c_string(raw_value: bytes) -> str:
 def build_event_payload(cpu: int, data, size: int, loaded_directories: Dict[Tuple[int, int], str]) -> Dict[str, object]:
     event = ct.cast(data, ct.POINTER(Event)).contents
     directory_key = (int(event.dir_dev), int(event.dir_ino))
+    billing_milliunits = int(event.billing_milliunits)
     return {
         "timestamp": time.time(),
         "cpu": cpu,
@@ -286,6 +341,11 @@ def build_event_payload(cpu: int, data, size: int, loaded_directories: Dict[Tupl
         "file_inode": int(event.file_ino),
         "directory_device": int(event.dir_dev),
         "directory_inode": int(event.dir_ino),
+        "mount_namespace_inode": int(event.mnt_ns_inum),
+        "root_mount_namespace_inode": int(event.root_mnt_ns_inum),
+        "off_device_access": bool(billing_milliunits),
+        "billing_milliunits": billing_milliunits,
+        "billing_units": billing_milliunits / 100.0,
         "watched_directory": loaded_directories.get(directory_key, ""),
         "kprobe": "vfs_open",
     }
@@ -298,11 +358,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         LOGGER.error("bcc is required to run this script.")
         return 1
 
-    opens_counter, watched_gauge = start_metrics(args.metrics_port)
+    opens_counter, watched_gauge, billing_counter = start_metrics(args.metrics_port)
     producer = build_kafka_producer(args.kafka_bootstrap_servers)
+    root_mount_namespace_inode = resolve_root_mount_namespace_inode(args.root_mnt_ns_inum)
 
     bpf = BPF(text=BPF_PROGRAM)
     loaded_directories = load_watch_directories(bpf["watched_dirs"], args.directories)
+    load_root_mount_namespace(bpf["root_mount_ns"], root_mount_namespace_inode)
 
     if watched_gauge is not None:
         watched_gauge.set(len(loaded_directories))
@@ -325,6 +387,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(json.dumps(payload, sort_keys=True), flush=True)
         if opens_counter is not None:
             opens_counter.inc()
+        if billing_counter is not None and payload["billing_milliunits"]:
+            billing_counter.inc(payload["billing_milliunits"])
         if producer is not None:
             producer.send(args.kafka_topic, payload)
 
