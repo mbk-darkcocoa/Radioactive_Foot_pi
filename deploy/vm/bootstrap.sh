@@ -61,7 +61,12 @@ fi
 
 install -m 0644 -T /opt/radioactive-foot-pi/deploy/systemd/fs-meter.service /etc/systemd/system/fs-meter.service
 
+install -d -m 0755 /etc/default /etc/sysconfig
 cat >/etc/default/fs-meter <<'EOF'
+APP_ROOT=/opt/radioactive-foot-pi
+SETTINGS_FILE=/opt/radioactive-foot-pi/common/fs_meter_settings.json
+EOF
+cat >/etc/sysconfig/fs-meter <<'EOF'
 APP_ROOT=/opt/radioactive-foot-pi
 SETTINGS_FILE=/opt/radioactive-foot-pi/common/fs_meter_settings.json
 EOF

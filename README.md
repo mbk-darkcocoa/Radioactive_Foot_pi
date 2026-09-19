@@ -21,6 +21,8 @@ REAL_INTERNET=1 vagrant up
 REAL_INTERNET=1 BRIDGE_INTERFACE="en0: Wi-Fi (Wireless)" vagrant up
 ```
 
+> Note: the `REAL_INTERNET` public bridge setting is configured for the VirtualBox provider.
+
 The VM bootstrap script installs Python + BCC tooling, syncs the repository into `/opt/radioactive-foot-pi`, and installs systemd units from:
 
 - `/opt/radioactive-foot-pi/deploy/systemd/fs-meter.service`
