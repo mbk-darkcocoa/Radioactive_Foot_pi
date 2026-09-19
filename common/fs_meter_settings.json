@@ -9,6 +9,6 @@
   "kafka_bootstrap_servers": "",
   "kafka_topic": "fs-meter-events",
   "poll_timeout_ms": 1000,
-  "root_mnt_ns_inum": 0,
+  "root_mnt_ns_inum": null,
   "billing_milliunits": 175
 }

@@ -268,7 +268,8 @@ def merge_runtime_settings(args: argparse.Namespace) -> Dict[str, object]:
 
     root_mnt_ns_inum = args.root_mnt_ns_inum
     if root_mnt_ns_inum is None:
-        root_mnt_ns_inum = int(settings_file_values.get("root_mnt_ns_inum", 0))
+        root_mnt_ns_setting = settings_file_values.get("root_mnt_ns_inum")
+        root_mnt_ns_inum = int(root_mnt_ns_setting) if root_mnt_ns_setting is not None else None
 
     billing_milliunits = args.billing_milliunits
     if billing_milliunits is None:
@@ -338,8 +339,8 @@ def load_watch_directories(watch_table, directories: Sequence[str]) -> Dict[Tupl
     return loaded
 
 
-def resolve_root_mount_namespace_inode(cli_value: int) -> int:
-    if cli_value > 0:
+def resolve_root_mount_namespace_inode(cli_value: Optional[int]) -> int:
+    if cli_value is not None:
         return cli_value
     # Fallback baseline is PID 1 in the current environment (e.g., container init).
     return int(os.stat("/proc/1/ns/mnt", follow_symlinks=False).st_ino)
@@ -456,20 +457,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     def on_event(cpu, data, size):
         payload = build_event_payload(cpu, data, size, loaded_directories)
-        print(
-            json.dumps(
-                {
-                    "timestamp": payload["timestamp"],
-                    "pid": payload["pid"],
-                    "tgid": payload["tgid"],
-                    "kprobe": payload["kprobe"],
-                    "off_device_access": payload["off_device_access"],
-                    "billing_milliunits": payload["billing_milliunits"],
-                },
-                sort_keys=True,
-            ),
-            flush=True,
-        )
+        sys.stdout.write(json.dumps(payload, sort_keys=True) + "\n")
+        sys.stdout.flush()
         if opens_counter is not None:
             opens_counter.inc()
         if billing_counter is not None and payload["billing_milliunits"]:
