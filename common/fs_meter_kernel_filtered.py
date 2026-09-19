@@ -44,7 +44,7 @@ DEFAULT_BILLING_MILLIUNITS = 175
 DEFAULT_POLL_TIMEOUT_MS = 1000
 DEFAULT_KAFKA_TOPIC = "fs-meter-events"
 
-BPF_PROGRAM = r"""
+BPF_PROGRAM_TEMPLATE = r"""
 #include <uapi/linux/ptrace.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
@@ -151,7 +151,7 @@ int trace_vfs_open(struct pt_regs *ctx, struct path *path, struct file *file)
         event.mnt_ns_inum &&
         event.mnt_ns_inum != event.root_mnt_ns_inum) {
         u32 *billing_cfg = billing_milliunits_cfg.lookup(&idx);
-        event.billing_milliunits = billing_cfg ? *billing_cfg : 175;
+        event.billing_milliunits = billing_cfg ? *billing_cfg : __DEFAULT_BILLING_MILLIUNITS__;
     }
     bpf_get_current_comm(&event.comm, sizeof(event.comm));
     bpf_probe_read_kernel_str(&event.filename, sizeof(event.filename), dentry->d_name.name);
@@ -160,6 +160,11 @@ int trace_vfs_open(struct pt_regs *ctx, struct path *path, struct file *file)
     return 0;
 }
 """
+
+BPF_PROGRAM = BPF_PROGRAM_TEMPLATE.replace(
+    "__DEFAULT_BILLING_MILLIUNITS__",
+    str(DEFAULT_BILLING_MILLIUNITS),
+)
 
 
 class WatchKey(ct.Structure):
@@ -488,6 +493,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     LOGGER.info("Attached kprobe to vfs_open")
 
     stop_requested = False
+    stdout_available = True
 
     def handle_stop(signum, _frame):
         nonlocal stop_requested
@@ -498,20 +504,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     signal.signal(signal.SIGTERM, handle_stop)
 
     def on_event(cpu, data, size):
-        nonlocal stop_requested
+        nonlocal stdout_available
         payload = build_event_payload(cpu, data, size, loaded_directories)
-        try:
-            os.write(1, (json.dumps(payload, sort_keys=True) + "\n").encode("utf-8"))
-        except (BrokenPipeError, OSError):
-            stop_requested = True
-            LOGGER.warning("Stdout stream unavailable; stopping monitor loop.")
-            return
         if opens_counter is not None:
             opens_counter.inc()
         if billing_counter is not None and payload["billing_milliunits"]:
             billing_counter.inc(payload["billing_milliunits"])
         if producer is not None:
             producer.send(runtime_settings["kafka_topic"], payload)
+        if stdout_available:
+            try:
+                os.write(1, (json.dumps(payload, sort_keys=True) + "\n").encode("utf-8"))
+            except (BrokenPipeError, OSError):
+                stdout_available = False
+                LOGGER.warning("Stdout stream unavailable; continuing without stdout event output.")
 
     bpf["events"].open_perf_buffer(on_event)
     LOGGER.info("Monitoring directories: %s", ", ".join(sorted(loaded_directories.values())))

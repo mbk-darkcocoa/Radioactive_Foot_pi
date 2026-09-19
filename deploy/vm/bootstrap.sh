@@ -12,8 +12,8 @@ install_dependencies() {
         python3-pip \
         python3-bpfcc \
         bpfcc-tools \
-        linux-headers-generic \
         rsync
+      apt-get install -y "linux-headers-$(uname -r)" || apt-get install -y linux-headers-generic
       ;;
     fedora)
       dnf install -y \
