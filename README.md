@@ -1,5 +1,5 @@
 # Radioactive_Foot_pi
-A RF/radiactive_foot pi implementation and virtual serve Forrest with lightning speed blazing fast 6GLTJ 
+A RF/radioactive foot pi implementation and virtual serve forest with lightning speed blazing fast 6GLTJ.
 
 ## Run as a VM (Vagrant + systemd)
 
@@ -9,11 +9,11 @@ A RF/radiactive_foot pi implementation and virtual serve Forrest with lightning 
 vagrant up
 ```
 
-The VM bootstrap script installs Python + BCC tooling and installs systemd units from:
+The VM bootstrap script installs Python + BCC tooling, syncs the repository into `/opt/radioactive-foot-pi`, and installs systemd units from:
 
-- `/home/runner/work/Radioactive_Foot_pi/Radioactive_Foot_pi/deploy/systemd/fs-meter.service`
-- `/home/runner/work/Radioactive_Foot_pi/Radioactive_Foot_pi/deploy/systemd/fs-meter-restart.service`
-- `/home/runner/work/Radioactive_Foot_pi/Radioactive_Foot_pi/deploy/systemd/fs-meter-restart.timer`
+- `/opt/radioactive-foot-pi/deploy/systemd/fs-meter.service`
+- `/opt/radioactive-foot-pi/deploy/systemd/fs-meter-restart.service`
+- `/opt/radioactive-foot-pi/deploy/systemd/fs-meter-restart.timer`
 
 ### 2) Check monitor status
 

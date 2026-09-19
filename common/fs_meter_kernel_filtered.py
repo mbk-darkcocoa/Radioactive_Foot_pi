@@ -361,7 +361,7 @@ def load_root_mount_namespace(root_mount_ns_table, namespace_inode: int) -> None
 
 def load_billing_rate(billing_table, billing_milliunits: int) -> None:
     billing_table[ct.c_int(0)] = ct.c_uint(billing_milliunits)
-    LOGGER.info("Configured off-device billing rate: %d milliunits", billing_milliunits)
+    LOGGER.info("Configured off-device billing rate")
 
 
 def start_metrics(metrics_port: int):
@@ -465,9 +465,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     def on_event(cpu, data, size):
         payload = build_event_payload(cpu, data, size, loaded_directories)
-        # lgtm [py/clear-text-logging-sensitive-data]
-        sys.stdout.write(json.dumps(payload, sort_keys=True) + "\n")
-        sys.stdout.flush()
         if opens_counter is not None:
             opens_counter.inc()
         if billing_counter is not None and payload["billing_milliunits"]:
