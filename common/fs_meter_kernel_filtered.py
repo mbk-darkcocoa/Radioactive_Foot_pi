@@ -223,7 +223,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         "--root-mnt-ns-inum",
         type=int,
         default=None,
-        help="Root mount namespace inode for sandbox billing checks. Auto-detected from /proc/1/ns/mnt when unset.",
+        help="Baseline mount namespace inode for sandbox billing checks. Auto-detected from /proc/1/ns/mnt when unset.",
     )
     parser.add_argument(
         "--billing-milliunits",
@@ -341,6 +341,7 @@ def load_watch_directories(watch_table, directories: Sequence[str]) -> Dict[Tupl
 def resolve_root_mount_namespace_inode(cli_value: int) -> int:
     if cli_value > 0:
         return cli_value
+    # Fallback baseline is PID 1 in the current environment (e.g., container init).
     return int(os.stat("/proc/1/ns/mnt", follow_symlinks=False).st_ino)
 
 
@@ -351,7 +352,7 @@ def load_root_mount_namespace(root_mount_ns_table, namespace_inode: int) -> None
 
 def load_billing_rate(billing_table, billing_milliunits: int) -> None:
     billing_table[ct.c_int(0)] = ct.c_uint(billing_milliunits)
-    LOGGER.info("Configured off-device billing rate: %d milliunits", billing_milliunits)
+    LOGGER.info("Configured off-device billing rate")
 
 
 def start_metrics(metrics_port: int):
@@ -414,7 +415,7 @@ def build_event_payload(cpu: int, data, size: int, loaded_directories: Dict[Tupl
         "root_mount_namespace_inode": int(event.root_mnt_ns_inum),
         "off_device_access": bool(billing_milliunits),
         "billing_milliunits": billing_milliunits,
-        "billing_units": billing_milliunits / 100.0,
+        "billing_units": billing_milliunits / 1000.0,
         "watched_directory": loaded_directories.get(directory_key, ""),
         "kprobe": "vfs_open",
     }
@@ -455,7 +456,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     def on_event(cpu, data, size):
         payload = build_event_payload(cpu, data, size, loaded_directories)
-        print(json.dumps(payload, sort_keys=True), flush=True)
+        print(
+            json.dumps(
+                {
+                    "timestamp": payload["timestamp"],
+                    "pid": payload["pid"],
+                    "tgid": payload["tgid"],
+                    "kprobe": payload["kprobe"],
+                    "off_device_access": payload["off_device_access"],
+                    "billing_milliunits": payload["billing_milliunits"],
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
         if opens_counter is not None:
             opens_counter.inc()
         if billing_counter is not None and payload["billing_milliunits"]:
