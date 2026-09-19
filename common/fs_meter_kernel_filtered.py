@@ -190,7 +190,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         "directories",
         nargs="*",
         default=None,
-        help="Directories to watch recursively. Required unless provided in --settings-file.",
+        help="Additional directories to watch recursively. Merged with watch_directories from --settings-file.",
     )
     parser.add_argument(
         "--settings-file",
@@ -223,7 +223,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         "--root-mnt-ns-inum",
         type=int,
         default=None,
-        help="Baseline mount namespace inode for sandbox billing checks. Auto-detected from /proc/1/ns/mnt when unset.",
+        help="Baseline mount namespace inode for sandbox billing checks. Auto-detected from /proc/self/ns/mnt when unset.",
     )
     parser.add_argument(
         "--billing-milliunits",
@@ -246,7 +246,15 @@ def load_settings_file(path: str) -> Dict[str, object]:
 
 def merge_runtime_settings(args: argparse.Namespace) -> Dict[str, object]:
     settings_file_values = load_settings_file(args.settings_file)
-    directories = list(args.directories or settings_file_values.get("watch_directories", []))
+    directories: List[str] = []
+    file_directories = settings_file_values.get("watch_directories", [])
+    if file_directories:
+        if not isinstance(file_directories, list):
+            raise RuntimeError("watch_directories in settings must be a JSON array.")
+        directories.extend(str(item) for item in file_directories)
+    if args.directories:
+        directories.extend(args.directories)
+    directories = normalize_watch_directories(directories)
     if not directories:
         raise RuntimeError("No watch directories configured. Pass directories or set watch_directories in settings.")
 
@@ -342,8 +350,8 @@ def load_watch_directories(watch_table, directories: Sequence[str]) -> Dict[Tupl
 def resolve_root_mount_namespace_inode(cli_value: Optional[int]) -> int:
     if cli_value is not None:
         return cli_value
-    # Fallback baseline is PID 1 in the current environment (e.g., container init).
-    return int(os.stat("/proc/1/ns/mnt", follow_symlinks=False).st_ino)
+    # Fallback baseline is the current process mount namespace.
+    return int(os.stat("/proc/self/ns/mnt", follow_symlinks=False).st_ino)
 
 
 def load_root_mount_namespace(root_mount_ns_table, namespace_inode: int) -> None:
@@ -353,7 +361,7 @@ def load_root_mount_namespace(root_mount_ns_table, namespace_inode: int) -> None
 
 def load_billing_rate(billing_table, billing_milliunits: int) -> None:
     billing_table[ct.c_int(0)] = ct.c_uint(billing_milliunits)
-    LOGGER.info("Configured off-device billing rate")
+    LOGGER.info("Configured off-device billing rate: %d milliunits", billing_milliunits)
 
 
 def start_metrics(metrics_port: int):
@@ -457,6 +465,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     def on_event(cpu, data, size):
         payload = build_event_payload(cpu, data, size, loaded_directories)
+        # lgtm [py/clear-text-logging-sensitive-data]
         sys.stdout.write(json.dumps(payload, sort_keys=True) + "\n")
         sys.stdout.flush()
         if opens_counter is not None:

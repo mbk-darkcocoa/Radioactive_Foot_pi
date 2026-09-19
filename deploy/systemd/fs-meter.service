@@ -1,0 +1,17 @@
+[Unit]
+Description=Radioactive Foot Pi fs-meter kernel monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/vagrant
+ExecStart=/usr/bin/python3 /vagrant/common/fs_meter_kernel_filtered.py --settings-file /vagrant/common/fs_meter_settings.json
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
