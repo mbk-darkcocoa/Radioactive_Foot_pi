@@ -20,7 +20,7 @@ if [[ ! -f /opt/radioactive-foot-pi/deploy/systemd/fs-meter.service ]]; then
   exit 1
 fi
 
-cp /opt/radioactive-foot-pi/deploy/systemd/fs-meter.service /etc/systemd/system/fs-meter.service
+install -m 0644 -T /opt/radioactive-foot-pi/deploy/systemd/fs-meter.service /etc/systemd/system/fs-meter.service
 
 cat >/etc/default/fs-meter <<'EOF'
 APP_ROOT=/opt/radioactive-foot-pi
