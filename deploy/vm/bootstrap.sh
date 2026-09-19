@@ -1,16 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export DEBIAN_FRONTEND=noninteractive
+install_dependencies() {
+  local distro_id="$1"
+  case "$distro_id" in
+    ubuntu|debian)
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y \
+        python3 \
+        python3-pip \
+        python3-bpfcc \
+        bpfcc-tools \
+        linux-headers-generic \
+        rsync
+      ;;
+    fedora)
+      dnf install -y \
+        python3 \
+        python3-pip \
+        python3-bcc \
+        bcc-tools \
+        kernel-devel \
+        rsync
+      ;;
+    *)
+      echo "Unsupported Linux distribution: ${distro_id}" >&2
+      exit 1
+      ;;
+  esac
+}
 
-apt-get update
-apt-get install -y \
-  python3 \
-  python3-pip \
-  python3-bpfcc \
-  bpfcc-tools \
-  linux-headers-generic \
-  rsync
+if [[ ! -f /etc/os-release ]]; then
+  echo "Cannot detect operating system: /etc/os-release missing." >&2
+  exit 1
+fi
+
+# shellcheck disable=SC1091
+source /etc/os-release
+install_dependencies "${ID}"
 
 install -d -m 0755 /opt/radioactive-foot-pi
 rsync -a --delete --exclude ".git" /vagrant/ /opt/radioactive-foot-pi/

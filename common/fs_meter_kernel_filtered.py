@@ -223,7 +223,19 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         "--root-mnt-ns-inum",
         type=int,
         default=None,
-        help="Baseline mount namespace inode for sandbox billing checks. Auto-detected from /proc/self/ns/mnt when unset.",
+        help="Baseline mount namespace inode for sandbox billing checks. When set, this overrides auto-detection.",
+    )
+    parser.add_argument(
+        "--root-mnt-ns-source",
+        choices=("self", "pid1", "pid"),
+        default=None,
+        help="Namespace auto-detection source when --root-mnt-ns-inum is unset: self, pid1, or pid.",
+    )
+    parser.add_argument(
+        "--root-mnt-ns-pid",
+        type=int,
+        default=None,
+        help="PID used when --root-mnt-ns-source=pid.",
     )
     parser.add_argument(
         "--billing-milliunits",
@@ -278,6 +290,17 @@ def merge_runtime_settings(args: argparse.Namespace) -> Dict[str, object]:
     if root_mnt_ns_inum is None:
         root_mnt_ns_setting = settings_file_values.get("root_mnt_ns_inum")
         root_mnt_ns_inum = int(root_mnt_ns_setting) if root_mnt_ns_setting is not None else None
+    root_mnt_ns_source = args.root_mnt_ns_source
+    if root_mnt_ns_source is None:
+        root_mnt_ns_source = str(settings_file_values.get("root_mnt_ns_source", "self"))
+    if root_mnt_ns_source not in ("self", "pid1", "pid"):
+        raise RuntimeError("root_mnt_ns_source must be one of: self, pid1, pid.")
+    root_mnt_ns_pid = args.root_mnt_ns_pid
+    if root_mnt_ns_pid is None:
+        root_mnt_ns_pid_setting = settings_file_values.get("root_mnt_ns_pid")
+        root_mnt_ns_pid = int(root_mnt_ns_pid_setting) if root_mnt_ns_pid_setting is not None else None
+    if root_mnt_ns_source == "pid" and (root_mnt_ns_pid is None or root_mnt_ns_pid <= 0):
+        raise RuntimeError("root_mnt_ns_pid must be set to a positive PID when root_mnt_ns_source=pid.")
 
     billing_milliunits = args.billing_milliunits
     if billing_milliunits is None:
@@ -293,6 +316,8 @@ def merge_runtime_settings(args: argparse.Namespace) -> Dict[str, object]:
         "kafka_topic": kafka_topic,
         "poll_timeout_ms": poll_timeout_ms,
         "root_mnt_ns_inum": root_mnt_ns_inum,
+        "root_mnt_ns_source": root_mnt_ns_source,
+        "root_mnt_ns_pid": root_mnt_ns_pid,
         "billing_milliunits": billing_milliunits,
     }
 
@@ -347,11 +372,16 @@ def load_watch_directories(watch_table, directories: Sequence[str]) -> Dict[Tupl
     return loaded
 
 
-def resolve_root_mount_namespace_inode(cli_value: Optional[int]) -> int:
+def resolve_root_mount_namespace_inode(cli_value: Optional[int], source: str, source_pid: Optional[int]) -> int:
     if cli_value is not None:
         return cli_value
-    # Fallback baseline is the current process mount namespace.
-    return int(os.stat("/proc/self/ns/mnt", follow_symlinks=False).st_ino)
+    if source == "pid1":
+        namespace_path = "/proc/1/ns/mnt"
+    elif source == "pid":
+        namespace_path = f"/proc/{source_pid}/ns/mnt"
+    else:
+        namespace_path = "/proc/self/ns/mnt"
+    return int(os.stat(namespace_path, follow_symlinks=False).st_ino)
 
 
 def load_root_mount_namespace(root_mount_ns_table, namespace_inode: int) -> None:
@@ -440,7 +470,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     opens_counter, watched_gauge, billing_counter = start_metrics(runtime_settings["metrics_port"])
     producer = build_kafka_producer(runtime_settings["kafka_bootstrap_servers"])
-    root_mount_namespace_inode = resolve_root_mount_namespace_inode(runtime_settings["root_mnt_ns_inum"])
+    root_mount_namespace_inode = resolve_root_mount_namespace_inode(
+        runtime_settings["root_mnt_ns_inum"],
+        runtime_settings["root_mnt_ns_source"],
+        runtime_settings["root_mnt_ns_pid"],
+    )
 
     bpf = BPF(text=BPF_PROGRAM)
     loaded_directories = load_watch_directories(bpf["watched_dirs"], runtime_settings["directories"])
@@ -464,8 +498,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     signal.signal(signal.SIGTERM, handle_stop)
 
     def on_event(cpu, data, size):
+        nonlocal stop_requested
         payload = build_event_payload(cpu, data, size, loaded_directories)
-        os.write(1, (json.dumps(payload, sort_keys=True) + "\n").encode("utf-8"))
+        try:
+            os.write(1, (json.dumps(payload, sort_keys=True) + "\n").encode("utf-8"))
+        except (BrokenPipeError, OSError):
+            stop_requested = True
+            LOGGER.warning("Stdout stream unavailable; stopping monitor loop.")
+            return
         if opens_counter is not None:
             opens_counter.inc()
         if billing_counter is not None and payload["billing_milliunits"]:
