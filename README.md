@@ -12,14 +12,11 @@ vagrant up
 The VM bootstrap script installs Python + BCC tooling, syncs the repository into `/opt/radioactive-foot-pi`, and installs systemd units from:
 
 - `/opt/radioactive-foot-pi/deploy/systemd/fs-meter.service`
-- `/opt/radioactive-foot-pi/deploy/systemd/fs-meter-restart.service`
-- `/opt/radioactive-foot-pi/deploy/systemd/fs-meter-restart.timer`
 
 ### 2) Check monitor status
 
 ```bash
 vagrant ssh -c "sudo systemctl status fs-meter.service --no-pager"
-vagrant ssh -c "sudo systemctl list-timers --all | grep fs-meter"
 ```
 
 ### 3) Follow logs

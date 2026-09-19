@@ -465,6 +465,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     def on_event(cpu, data, size):
         payload = build_event_payload(cpu, data, size, loaded_directories)
+        LOGGER.info(
+            "vfs_open event pid=%d tgid=%d dir=%d:%d off_device=%s billing_milliunits=%d",
+            payload["pid"],
+            payload["tgid"],
+            payload["directory_device"],
+            payload["directory_inode"],
+            payload["off_device_access"],
+            payload["billing_milliunits"],
+        )
         if opens_counter is not None:
             opens_counter.inc()
         if billing_counter is not None and payload["billing_milliunits"]:

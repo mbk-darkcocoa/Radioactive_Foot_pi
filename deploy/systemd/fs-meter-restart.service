@@ -1,6 +1,0 @@
-[Unit]
-Description=Restart fs-meter monitor
-
-[Service]
-Type=oneshot
-ExecStart=/bin/systemctl restart fs-meter.service
