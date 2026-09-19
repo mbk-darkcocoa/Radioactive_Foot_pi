@@ -40,12 +40,9 @@ except ImportError:  # pragma: no cover - dependency checked at runtime
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 LOGGER = logging.getLogger("fs_meter_kernel_filtered")
 
-DEFAULT_WATCH_DIRECTORIES = [
-    "/etc",
-    "/var/log",
-    "/mnt/off_device",
-    "/tmp/billing_test",
-]
+DEFAULT_BILLING_MILLIUNITS = 175
+DEFAULT_POLL_TIMEOUT_MS = 1000
+DEFAULT_KAFKA_TOPIC = "fs-meter-events"
 
 BPF_PROGRAM = r"""
 #include <uapi/linux/ptrace.h>
@@ -79,6 +76,7 @@ struct event_t {
 
 BPF_HASH(watched_dirs, struct watch_key_t, u8, 4096);
 BPF_ARRAY(root_mount_ns, u64, 1);
+BPF_ARRAY(billing_milliunits_cfg, u32, 1);
 BPF_PERF_OUTPUT(events);
 
 int trace_vfs_open(struct pt_regs *ctx, struct path *path, struct file *file)
@@ -152,7 +150,8 @@ int trace_vfs_open(struct pt_regs *ctx, struct path *path, struct file *file)
     if (event.root_mnt_ns_inum &&
         event.mnt_ns_inum &&
         event.mnt_ns_inum != event.root_mnt_ns_inum) {
-        event.billing_milliunits = 175;
+        u32 *billing_cfg = billing_milliunits_cfg.lookup(&idx);
+        event.billing_milliunits = billing_cfg ? *billing_cfg : 175;
     }
     bpf_get_current_comm(&event.comm, sizeof(event.comm));
     bpf_probe_read_kernel_str(&event.filename, sizeof(event.filename), dentry->d_name.name);
@@ -190,38 +189,103 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "directories",
         nargs="*",
-        default=DEFAULT_WATCH_DIRECTORIES,
-        help="Directories to watch recursively.",
+        default=None,
+        help="Directories to watch recursively. Required unless provided in --settings-file.",
+    )
+    parser.add_argument(
+        "--settings-file",
+        default="",
+        help="Optional JSON settings file for fs meter runtime configuration.",
     )
     parser.add_argument(
         "--metrics-port",
         type=int,
-        default=0,
+        default=None,
         help="Prometheus metrics port. Disabled when 0.",
     )
     parser.add_argument(
         "--kafka-bootstrap-servers",
-        default=os.getenv("KAFKA_BOOTSTRAP_SERVERS", ""),
+        default=None,
         help="Optional Kafka bootstrap server list.",
     )
     parser.add_argument(
         "--kafka-topic",
-        default=os.getenv("KAFKA_TOPIC", "fs-meter-events"),
+        default=None,
         help="Kafka topic for emitted events.",
     )
     parser.add_argument(
         "--poll-timeout-ms",
         type=int,
-        default=1000,
+        default=None,
         help="perf buffer poll timeout in milliseconds.",
     )
     parser.add_argument(
         "--root-mnt-ns-inum",
         type=int,
-        default=0,
+        default=None,
         help="Root mount namespace inode for sandbox billing checks. Auto-detected from /proc/1/ns/mnt when unset.",
     )
+    parser.add_argument(
+        "--billing-milliunits",
+        type=int,
+        default=None,
+        help="Billing rate in milliunits for off-device mount namespace access events.",
+    )
     return parser.parse_args(argv)
+
+
+def load_settings_file(path: str) -> Dict[str, object]:
+    if not path:
+        return {}
+    with open(path, "r", encoding="utf-8") as handle:
+        settings = json.load(handle)
+    if not isinstance(settings, dict):
+        raise RuntimeError("Settings file must contain a JSON object.")
+    return settings
+
+
+def merge_runtime_settings(args: argparse.Namespace) -> Dict[str, object]:
+    settings_file_values = load_settings_file(args.settings_file)
+    directories = list(args.directories or settings_file_values.get("watch_directories", []))
+    if not directories:
+        raise RuntimeError("No watch directories configured. Pass directories or set watch_directories in settings.")
+
+    metrics_port = args.metrics_port
+    if metrics_port is None:
+        metrics_port = int(settings_file_values.get("metrics_port", 0))
+
+    kafka_bootstrap_servers = args.kafka_bootstrap_servers
+    if kafka_bootstrap_servers is None:
+        kafka_bootstrap_servers = str(settings_file_values.get("kafka_bootstrap_servers", os.getenv("KAFKA_BOOTSTRAP_SERVERS", "")))
+
+    kafka_topic = args.kafka_topic
+    if kafka_topic is None:
+        kafka_topic = str(settings_file_values.get("kafka_topic", os.getenv("KAFKA_TOPIC", DEFAULT_KAFKA_TOPIC)))
+
+    poll_timeout_ms = args.poll_timeout_ms
+    if poll_timeout_ms is None:
+        poll_timeout_ms = int(settings_file_values.get("poll_timeout_ms", DEFAULT_POLL_TIMEOUT_MS))
+
+    root_mnt_ns_inum = args.root_mnt_ns_inum
+    if root_mnt_ns_inum is None:
+        root_mnt_ns_inum = int(settings_file_values.get("root_mnt_ns_inum", 0))
+
+    billing_milliunits = args.billing_milliunits
+    if billing_milliunits is None:
+        billing_milliunits = int(settings_file_values.get("billing_milliunits", DEFAULT_BILLING_MILLIUNITS))
+
+    if billing_milliunits < 0:
+        raise RuntimeError("billing_milliunits must be >= 0.")
+
+    return {
+        "directories": directories,
+        "metrics_port": metrics_port,
+        "kafka_bootstrap_servers": kafka_bootstrap_servers,
+        "kafka_topic": kafka_topic,
+        "poll_timeout_ms": poll_timeout_ms,
+        "root_mnt_ns_inum": root_mnt_ns_inum,
+        "billing_milliunits": billing_milliunits,
+    }
 
 
 def normalize_watch_directories(directories: Sequence[str]) -> List[str]:
@@ -283,6 +347,11 @@ def resolve_root_mount_namespace_inode(cli_value: int) -> int:
 def load_root_mount_namespace(root_mount_ns_table, namespace_inode: int) -> None:
     root_mount_ns_table[ct.c_int(0)] = ct.c_ulonglong(namespace_inode)
     LOGGER.info("Configured root mount namespace inode: %d", namespace_inode)
+
+
+def load_billing_rate(billing_table, billing_milliunits: int) -> None:
+    billing_table[ct.c_int(0)] = ct.c_uint(billing_milliunits)
+    LOGGER.info("Configured off-device billing rate: %d milliunits", billing_milliunits)
 
 
 def start_metrics(metrics_port: int):
@@ -353,18 +422,20 @@ def build_event_payload(cpu: int, data, size: int, loaded_directories: Dict[Tupl
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
+    runtime_settings = merge_runtime_settings(args)
 
     if BPF is None:
         LOGGER.error("bcc is required to run this script.")
         return 1
 
-    opens_counter, watched_gauge, billing_counter = start_metrics(args.metrics_port)
-    producer = build_kafka_producer(args.kafka_bootstrap_servers)
-    root_mount_namespace_inode = resolve_root_mount_namespace_inode(args.root_mnt_ns_inum)
+    opens_counter, watched_gauge, billing_counter = start_metrics(runtime_settings["metrics_port"])
+    producer = build_kafka_producer(runtime_settings["kafka_bootstrap_servers"])
+    root_mount_namespace_inode = resolve_root_mount_namespace_inode(runtime_settings["root_mnt_ns_inum"])
 
     bpf = BPF(text=BPF_PROGRAM)
-    loaded_directories = load_watch_directories(bpf["watched_dirs"], args.directories)
+    loaded_directories = load_watch_directories(bpf["watched_dirs"], runtime_settings["directories"])
     load_root_mount_namespace(bpf["root_mount_ns"], root_mount_namespace_inode)
+    load_billing_rate(bpf["billing_milliunits_cfg"], runtime_settings["billing_milliunits"])
 
     if watched_gauge is not None:
         watched_gauge.set(len(loaded_directories))
@@ -390,14 +461,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if billing_counter is not None and payload["billing_milliunits"]:
             billing_counter.inc(payload["billing_milliunits"])
         if producer is not None:
-            producer.send(args.kafka_topic, payload)
+            producer.send(runtime_settings["kafka_topic"], payload)
 
     bpf["events"].open_perf_buffer(on_event)
     LOGGER.info("Monitoring directories: %s", ", ".join(sorted(loaded_directories.values())))
 
     try:
         while not stop_requested:
-            bpf.perf_buffer_poll(timeout=args.poll_timeout_ms)
+            bpf.perf_buffer_poll(timeout=runtime_settings["poll_timeout_ms"])
     finally:
         if producer is not None:
             producer.flush(timeout=5)

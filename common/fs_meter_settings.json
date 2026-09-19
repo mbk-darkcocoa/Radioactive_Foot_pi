@@ -1,0 +1,14 @@
+{
+  "watch_directories": [
+    "/etc",
+    "/var/log",
+    "/mnt/off_device",
+    "/tmp/billing_test"
+  ],
+  "metrics_port": 0,
+  "kafka_bootstrap_servers": "",
+  "kafka_topic": "fs-meter-events",
+  "poll_timeout_ms": 1000,
+  "root_mnt_ns_inum": 0,
+  "billing_milliunits": 175
+}
