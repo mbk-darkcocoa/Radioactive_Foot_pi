@@ -4,7 +4,7 @@ set -euo pipefail
 install_dependencies() {
   local distro_id="$1"
   case "$distro_id" in
-    ubuntu|debian)
+    ubuntu)
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
       apt-get install -y \
@@ -14,6 +14,17 @@ install_dependencies() {
         bpfcc-tools \
         rsync
       apt-get install -y "linux-headers-$(uname -r)" || apt-get install -y linux-headers-generic
+      ;;
+    debian)
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y \
+        python3 \
+        python3-pip \
+        python3-bpfcc \
+        bpfcc-tools \
+        rsync
+      apt-get install -y "linux-headers-$(uname -r)" || apt-get install -y linux-headers-amd64
       ;;
     fedora)
       dnf install -y \

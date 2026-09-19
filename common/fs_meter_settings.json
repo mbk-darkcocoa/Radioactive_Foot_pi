@@ -10,7 +10,7 @@
   "kafka_topic": "fs-meter-events",
   "poll_timeout_ms": 1000,
   "root_mnt_ns_inum": null,
-  "root_mnt_ns_source": "self",
+  "root_mnt_ns_source": "pid1",
   "root_mnt_ns_pid": null,
   "billing_milliunits": 175
 }

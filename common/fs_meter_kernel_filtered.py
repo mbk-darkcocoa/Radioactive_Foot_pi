@@ -297,7 +297,7 @@ def merge_runtime_settings(args: argparse.Namespace) -> Dict[str, object]:
         root_mnt_ns_inum = int(root_mnt_ns_setting) if root_mnt_ns_setting is not None else None
     root_mnt_ns_source = args.root_mnt_ns_source
     if root_mnt_ns_source is None:
-        root_mnt_ns_source = str(settings_file_values.get("root_mnt_ns_source", "self"))
+        root_mnt_ns_source = str(settings_file_values.get("root_mnt_ns_source", "pid1"))
     if root_mnt_ns_source not in ("self", "pid1", "pid"):
         raise RuntimeError("root_mnt_ns_source must be one of: self, pid1, pid.")
     root_mnt_ns_pid = args.root_mnt_ns_pid

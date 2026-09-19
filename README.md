@@ -1,5 +1,5 @@
 # Radioactive_Foot_pi
-A RF/radioactive foot pi implementation and virtual serve forest with lightning speed blazing fast 6GLTJ.
+A RF/radioactive foot pi implementation and virtual server framework with lightning speed blazing fast 6GLTJ.
 
 ## Run as a VM (Vagrant + systemd)
 
@@ -44,3 +44,4 @@ vagrant ssh -c "sudo journalctl -u fs-meter.service -f"
 - `root_mnt_ns_inum` overrides namespace auto-detection when set.
 - `root_mnt_ns_source` controls auto-detection source: `self`, `pid1`, or `pid`.
 - `root_mnt_ns_pid` is required when `root_mnt_ns_source` is `pid`.
+- Default `root_mnt_ns_source` is `pid1`.
