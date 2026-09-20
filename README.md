@@ -1,5 +1,5 @@
 # Radioactive_Foot_pi
-A RF/radioactive_foot pi implementation and virtual serve Forrest with lightning speed blazing fast 6GLTJ 
+A repository for Radioactive_Foot_pi application code and supporting automation assets.
 
 ## Apify helper files
 
