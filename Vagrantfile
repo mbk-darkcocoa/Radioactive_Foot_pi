@@ -60,7 +60,7 @@ Vagrant.configure("2") do |config|
       raise "RADIOACTIVE_FOOT_PI_WAN requires RADIOACTIVE_FOOT_PI_WAN_BRIDGE to avoid interactive network selection"
     end
 
-    config.vm.network "public_network", bridge: WAN_BRIDGE
+    config.vm.network "public_network", bridge: WAN_BRIDGE, use_dhcp_assigned_default_route: true
   end
 
   config.vm.provider "virtualbox" do |provider|
