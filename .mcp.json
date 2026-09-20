@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GH_CONNECTOR_TOKEN}"
+      }
+    },
+    "gitlab": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "env": {
+        "GITLAB_TOKEN": "${GITLAB_TOKEN}",
+        "GITLAB_BASE_URL": "${GITLAB_BASE_URL}"
+      }
+    },
+    "gemini": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-genai"],
+      "env": {
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}",
+        "GEMINI_MODEL": "${GEMINI_MODEL}"
+      }
+    },
+    "google-apis": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-googleapis"],
+      "env": {
+        "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
+        "GOOGLE_CSE_ID": "${GOOGLE_CSE_ID}"
+      }
+    },
+    "loveable": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-loveable"],
+      "env": {
+        "LOVEABLE_API_URL": "${LOVEABLE_API_URL}",
+        "LOVEABLE_API_KEY": "${LOVEABLE_API_KEY}",
+        "LOVEABLE_EXTENSION_ENABLED": "${LOVEABLE_EXTENSION_ENABLED}"
+      }
+    }
+  }
+}

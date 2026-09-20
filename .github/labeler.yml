@@ -1,0 +1,21 @@
+common:
+  - changed-files:
+      - any-glob-to-any-file:
+          - common/**
+
+dark-cocoa-dc:
+  - changed-files:
+      - any-glob-to-any-file:
+          - dark-cocoa-dc/**
+
+schemas:
+  - changed-files:
+      - any-glob-to-any-file:
+          - schemas/**
+
+docs/github:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - .github/**
+          - README.md
