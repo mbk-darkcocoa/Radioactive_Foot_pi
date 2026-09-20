@@ -2,7 +2,6 @@ LAN_IP = ENV.fetch("RADIOACTIVE_FOOT_PI_LAN_IP", "192.168.56.10")
 VM_CPUS = ENV.fetch("RADIOACTIVE_FOOT_PI_CPUS", "2").to_i
 VM_MEMORY = ENV.fetch("RADIOACTIVE_FOOT_PI_MEMORY", "2048")
 VM_HOSTNAME = ENV.fetch("RADIOACTIVE_FOOT_PI_HOSTNAME", "radioactive-foot-pi")
-VM_PROVIDER = ENV.fetch("RADIOACTIVE_FOOT_PI_PROVIDER", "virtualbox")
 VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu")
 WAN_BRIDGE = ENV["RADIOACTIVE_FOOT_PI_WAN_BRIDGE"]
 WAN_ENABLED = ENV.fetch("RADIOACTIVE_FOOT_PI_WAN", "false") == "true"
@@ -28,7 +27,7 @@ Vagrant.configure("2") do |config|
     config.vm.network "public_network", **public_network_options
   end
 
-  config.vm.provider VM_PROVIDER do |provider|
+  config.vm.provider "virtualbox" do |provider|
     provider.memory = VM_MEMORY
     provider.cpus = VM_CPUS
   end
