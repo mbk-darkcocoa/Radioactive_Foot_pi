@@ -14,9 +14,11 @@ if [[ ! -r "${INPUT_FILE}" ]]; then
   exit 1
 fi
 
-RUN_URL="https://api.apify.com/v2/actors/apify~web-scraper/runs?token=${API_TOKEN}"
+AUTH_SCHEME="Bearer"
+AUTH_HEADER="Authorization: ${AUTH_SCHEME} ${API_TOKEN}"
 
 curl -X POST \
-  "${RUN_URL}" \
+  "https://api.apify.com/v2/actors/apify~web-scraper/runs" \
+  -H "${AUTH_HEADER}" \
   -H "Content-Type: application/json" \
   --data-binary "@${INPUT_FILE}"
