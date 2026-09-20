@@ -19,16 +19,20 @@ rescue IPAddr::InvalidAddressError
   raise "#{name} must be a valid IPv4 address"
 end
 
+def truthy_env?(name, default)
+  %w[1 true yes on].include?(ENV.fetch(name, default).downcase)
+end
+
 VM_CPUS = parse_integer_env("RADIOACTIVE_FOOT_PI_CPUS", "2")
 VM_MEMORY = parse_integer_env("RADIOACTIVE_FOOT_PI_MEMORY", "2048")
 VM_HOSTNAME = ENV.fetch("RADIOACTIVE_FOOT_PI_HOSTNAME", "radioactive-foot-pi")
 VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu").downcase
-LAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_LAN", "true").downcase)
+LAN_ENABLED = truthy_env?("RADIOACTIVE_FOOT_PI_LAN", "true")
 LAN_IP = parse_ipv4_env("RADIOACTIVE_FOOT_PI_LAN_IP", "192.168.56.10")
-WAN_ACKNOWLEDGED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE", "false").downcase)
+WAN_ACKNOWLEDGED = truthy_env?("RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE", "false")
 WAN_BRIDGE = ENV["RADIOACTIVE_FOOT_PI_WAN_BRIDGE"]&.strip
 WAN_BRIDGE = nil if WAN_BRIDGE == ""
-WAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN", "false").downcase)
+WAN_ENABLED = truthy_env?("RADIOACTIVE_FOOT_PI_WAN", "false")
 
 BOXES = {
   "ubuntu" => "bento/ubuntu-22.04",
