@@ -1,4 +1,4 @@
-name: GitLab mirror sync
+name: GitLab main branch sync
 
 on:
   workflow_dispatch:

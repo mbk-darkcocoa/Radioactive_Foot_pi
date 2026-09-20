@@ -31,7 +31,7 @@
 - PR auto-labeling:
   - `.github/workflows/pr-labeler.yml`
   - `.github/labeler.yml`
-- GitLab mirror sync:
+- GitLab main branch sync:
   - `.github/workflows/gitlab-mirror.yml`
 
 ### 4) MCP server configuration
@@ -51,13 +51,13 @@
 - `GITLAB_MIRROR_URL`
 - `GEMINI_API_KEY`
 - `GOOGLE_API_KEY`
-- `GOOGLE_CSE_ID`
 - `LOVEABLE_API_KEY`
 
 ### Variables
 - `GITLAB_BASE_URL` (for example: `https://gitlab.com`)
 - `GITLAB_MIRROR_BRANCH` (default `main`)
 - `GEMINI_MODEL` (default `gemini-2.5-flash`)
+- `GOOGLE_CSE_ID`
 - `LOVEABLE_EXTENSION_ENABLED` (`true` to activate)
 - `LOVEABLE_API_URL` (Loveable service base URL)
 

@@ -58,7 +58,7 @@ jobs:
 
           url = (
               "https://generativelanguage.googleapis.com/v1beta/models/"
-              f"{model}:generateContent?key={api_key}"
+              f"{model}:generateContent"
           )
           payload = {
               "contents": [{"parts": [{"text": "health-check"}]}],
@@ -67,7 +67,10 @@ jobs:
           req = urllib.request.Request(
               url,
               data=json.dumps(payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"},
+              headers={
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": api_key,
+              },
           )
           try:
               with urllib.request.urlopen(req, timeout=30) as response:
@@ -79,7 +82,7 @@ jobs:
       - name: Verify Google API connector
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          GOOGLE_CSE_ID: ${{ secrets.GOOGLE_CSE_ID }}
+          GOOGLE_CSE_ID: ${{ vars.GOOGLE_CSE_ID }}
         shell: python
         run: |
           import os
