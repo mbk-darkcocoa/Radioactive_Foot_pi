@@ -29,5 +29,6 @@ jobs:
           fi
 
           target_branch="${GITLAB_MIRROR_BRANCH:-main}"
+          git fetch origin "${target_branch}:${target_branch}"
           git remote add gitlab "${GITLAB_MIRROR_URL}"
-          git push --prune gitlab "HEAD:refs/heads/${target_branch}"
+          git push --prune gitlab "refs/heads/${target_branch}:refs/heads/${target_branch}"

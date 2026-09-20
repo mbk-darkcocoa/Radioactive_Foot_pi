@@ -32,10 +32,12 @@
       }
     },
     "loveable": {
-      "url": "${LOVEABLE_API_URL}",
-      "headers": {
-        "X-API-Key": "${LOVEABLE_API_KEY}",
-        "X-Loveable-Extension": "active"
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-loveable"],
+      "env": {
+        "LOVEABLE_API_URL": "${LOVEABLE_API_URL}",
+        "LOVEABLE_API_KEY": "${LOVEABLE_API_KEY}",
+        "LOVEABLE_EXTENSION_ENABLED": "${LOVEABLE_EXTENSION_ENABLED}"
       }
     }
   }
