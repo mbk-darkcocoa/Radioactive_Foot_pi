@@ -21,4 +21,4 @@ curl -X POST \
   "https://api.apify.com/v2/actors/apify~web-scraper/runs" \
   -H "${AUTH_HEADER}" \
   -H "Content-Type: application/json" \
-  --data "@${INPUT_FILE}"
+  --data-binary "@${INPUT_FILE}"
