@@ -1,6 +1,14 @@
 # Radioactive_Foot_pi
 A repository for Radioactive_Foot_pi application code and supporting automation assets.
 
+## Vagrant LAN/WAN setup
+
+- `Vagrantfile` creates a VM with a private LAN on `192.168.56.10` by default.
+- Set `RADIOACTIVE_FOOT_PI_WAN=true` to add a bridged/public WAN adapter.
+- Set `RADIOACTIVE_FOOT_PI_WAN_BRIDGE` to pin the WAN adapter to a specific host bridge.
+- Set `RADIOACTIVE_FOOT_PI_OS=ubuntu` or `RADIOACTIVE_FOOT_PI_OS=fedora` to choose the base box.
+- Optional sizing overrides: `RADIOACTIVE_FOOT_PI_CPUS`, `RADIOACTIVE_FOOT_PI_MEMORY`, and `RADIOACTIVE_FOOT_PI_HOSTNAME`.
+
 ## Apify helper files
 
 - `docs/apify-web-scraper-input.json` contains an example input payload for the Apify `apify/web-scraper` actor.
