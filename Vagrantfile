@@ -4,7 +4,7 @@ VM_MEMORY = ENV.fetch("RADIOACTIVE_FOOT_PI_MEMORY", "2048")
 VM_HOSTNAME = ENV.fetch("RADIOACTIVE_FOOT_PI_HOSTNAME", "radioactive-foot-pi")
 VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu")
 WAN_BRIDGE = ENV["RADIOACTIVE_FOOT_PI_WAN_BRIDGE"]
-WAN_ENABLED = ENV.fetch("RADIOACTIVE_FOOT_PI_WAN", "false") == "true"
+WAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN", "false").downcase)
 
 BOXES = {
   "ubuntu" => "bento/ubuntu-22.04",
