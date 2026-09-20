@@ -28,4 +28,11 @@ jobs:
           fi
           target_branch="main"
           git remote add gitlab "${GITLAB_MIRROR_URL}"
-          git push --force --prune gitlab "HEAD:refs/heads/${target_branch}"
+          git fetch gitlab "refs/heads/${target_branch}:refs/remotes/gitlab/${target_branch}" || true
+          remote_ref="refs/remotes/gitlab/${target_branch}"
+          if git show-ref --verify --quiet "${remote_ref}"; then
+            remote_sha="$(git rev-parse "${remote_ref}")"
+            git push --force-with-lease="refs/heads/${target_branch}:${remote_sha}" --prune gitlab "HEAD:refs/heads/${target_branch}"
+          else
+            git push --prune gitlab "HEAD:refs/heads/${target_branch}"
+          fi
