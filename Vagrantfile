@@ -2,7 +2,7 @@ LAN_IP = ENV.fetch("RADIOACTIVE_FOOT_PI_LAN_IP", "192.168.56.10")
 VM_CPUS = ENV.fetch("RADIOACTIVE_FOOT_PI_CPUS", "2").to_i
 VM_MEMORY = ENV.fetch("RADIOACTIVE_FOOT_PI_MEMORY", "2048").to_i
 VM_HOSTNAME = ENV.fetch("RADIOACTIVE_FOOT_PI_HOSTNAME", "radioactive-foot-pi")
-VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu")
+VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu").downcase
 WAN_BRIDGE = ENV["RADIOACTIVE_FOOT_PI_WAN_BRIDGE"]
 WAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN", "false").downcase)
 
