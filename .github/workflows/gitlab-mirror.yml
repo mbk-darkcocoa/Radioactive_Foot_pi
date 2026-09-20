@@ -1,0 +1,33 @@
+name: GitLab mirror sync
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror to GitLab
+        env:
+          GITLAB_MIRROR_URL: ${{ secrets.GITLAB_MIRROR_URL }}
+          GITLAB_MIRROR_BRANCH: ${{ vars.GITLAB_MIRROR_BRANCH }}
+        run: |
+          if [ -z "${GITLAB_MIRROR_URL}" ]; then
+            echo "::notice::GITLAB_MIRROR_URL is not configured; skipping mirror sync."
+            exit 0
+          fi
+
+          target_branch="${GITLAB_MIRROR_BRANCH:-main}"
+          git remote add gitlab "${GITLAB_MIRROR_URL}"
+          git push --prune gitlab "HEAD:refs/heads/${target_branch}"

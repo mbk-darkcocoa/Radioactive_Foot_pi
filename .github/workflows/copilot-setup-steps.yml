@@ -1,0 +1,41 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - .github/actions/setup-python/action.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - .github/actions/setup-python/action.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python tooling
+        uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.11"
+          install-grpc-tools: "true"
+
+      - name: Set up Node.js for MCP tooling
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify setup toolchain
+        shell: bash
+        run: |
+          python --version
+          pip --version
+          node --version
+          npm --version

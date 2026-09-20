@@ -1,0 +1,125 @@
+name: Integration connector health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  connector-smoke-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify GitHub API connector
+        env:
+          GH_CONNECTOR_TOKEN: ${{ secrets.GH_CONNECTOR_TOKEN }}
+        run: |
+          if [ -z "${GH_CONNECTOR_TOKEN}" ]; then
+            echo "::notice::GH_CONNECTOR_TOKEN is not configured; skipping GitHub connector check."
+            exit 0
+          fi
+          curl -fsSL -u "${GH_CONNECTOR_TOKEN}:x-oauth-basic" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/user >/dev/null
+
+      - name: Verify GitLab API connector
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_BASE_URL: ${{ vars.GITLAB_BASE_URL }}
+        run: |
+          if [ -z "${GITLAB_TOKEN}" ] || [ -z "${GITLAB_BASE_URL}" ]; then
+            echo "::notice::GITLAB_TOKEN or GITLAB_BASE_URL missing; skipping GitLab connector check."
+            exit 0
+          fi
+          curl -fsSL -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+            "${GITLAB_BASE_URL%/}/api/v4/user" >/dev/null
+
+      - name: Verify Gemini API connector
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        shell: python
+        run: |
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          api_key = os.getenv("GEMINI_API_KEY", "").strip()
+          model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+          if not api_key:
+              print("::notice::GEMINI_API_KEY missing; skipping Gemini connector check.")
+              raise SystemExit(0)
+
+          url = (
+              "https://generativelanguage.googleapis.com/v1beta/models/"
+              f"{model}:generateContent?key={api_key}"
+          )
+          payload = {
+              "contents": [{"parts": [{"text": "health-check"}]}],
+              "generationConfig": {"maxOutputTokens": 8},
+          }
+          req = urllib.request.Request(
+              url,
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  if response.status >= 400:
+                      raise RuntimeError(f"Gemini API returned status {response.status}")
+          except urllib.error.HTTPError as exc:
+              raise RuntimeError(f"Gemini API check failed: {exc.code}") from exc
+
+      - name: Verify Google API connector
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_CSE_ID: ${{ secrets.GOOGLE_CSE_ID }}
+        shell: python
+        run: |
+          import os
+          import urllib.error
+          import urllib.request
+
+          api_key = os.getenv("GOOGLE_API_KEY", "").strip()
+          cse_id = os.getenv("GOOGLE_CSE_ID", "").strip()
+          if not api_key or not cse_id:
+              print("::notice::GOOGLE_API_KEY or GOOGLE_CSE_ID missing; skipping Google API connector check.")
+              raise SystemExit(0)
+
+          url = (
+              "https://www.googleapis.com/customsearch/v1"
+              f"?key={api_key}&cx={cse_id}&q=radioactive+foot+pi&num=1"
+          )
+          req = urllib.request.Request(url)
+          try:
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  if response.status >= 400:
+                      raise RuntimeError(f"Google API returned status {response.status}")
+          except urllib.error.HTTPError as exc:
+              raise RuntimeError(f"Google API check failed: {exc.code}") from exc
+
+      - name: Verify Loveable integration endpoint
+        env:
+          LOVEABLE_EXTENSION_ENABLED: ${{ vars.LOVEABLE_EXTENSION_ENABLED }}
+          LOVEABLE_API_URL: ${{ vars.LOVEABLE_API_URL }}
+          LOVEABLE_API_KEY: ${{ secrets.LOVEABLE_API_KEY }}
+        run: |
+          if [ "${LOVEABLE_EXTENSION_ENABLED}" != "true" ]; then
+            echo "::notice::Loveable extension toggle is not enabled; skipping Loveable check."
+            exit 0
+          fi
+
+          if [ -z "${LOVEABLE_API_URL}" ] || [ -z "${LOVEABLE_API_KEY}" ]; then
+            echo "::error::Loveable extension is enabled but LOVEABLE_API_URL/LOVEABLE_API_KEY are missing."
+            exit 1
+          fi
+
+          curl -fsSL -H "X-API-Key: ${LOVEABLE_API_KEY}" \
+            -H "X-Loveable-Extension: active" \
+            "${LOVEABLE_API_URL%/}/health" >/dev/null
