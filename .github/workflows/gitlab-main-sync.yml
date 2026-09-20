@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  mirror:
+  sync-main:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Mirror to GitLab
+      - name: Sync main branch to GitLab
         env:
           GITLAB_MIRROR_URL: ${{ secrets.GITLAB_MIRROR_URL }}
         run: |

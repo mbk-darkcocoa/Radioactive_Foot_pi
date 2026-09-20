@@ -32,7 +32,7 @@
   - `.github/workflows/pr-labeler.yml`
   - `.github/labeler.yml`
 - GitLab main branch sync:
-  - `.github/workflows/gitlab-mirror.yml`
+  - `.github/workflows/gitlab-main-sync.yml`
 
 ### 4) MCP server configuration
 - File: `/.mcp.json`
