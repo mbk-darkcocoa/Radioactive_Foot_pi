@@ -55,7 +55,6 @@
 
 ### Variables
 - `GITLAB_BASE_URL` (for example: `https://gitlab.com`)
-- `GITLAB_MIRROR_BRANCH` (default `main`)
 - `GEMINI_MODEL` (default `gemini-2.5-flash`)
 - `GOOGLE_CSE_ID`
 - `LOVEABLE_EXTENSION_ENABLED` (`true` to activate)
