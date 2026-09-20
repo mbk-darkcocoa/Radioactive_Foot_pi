@@ -5,7 +5,7 @@ A repository for Radioactive_Foot_pi application code and supporting automation 
 
 - `Vagrantfile` creates a VM with a private LAN on `192.168.56.10` by default.
 - Set `RADIOACTIVE_FOOT_PI_LAN` to `false`, `0`, `no`, or `off` to disable the private LAN adapter.
-- Set `RADIOACTIVE_FOOT_PI_LAN_IP` to override the default private LAN address.
+- Set `RADIOACTIVE_FOOT_PI_LAN_IP` to override the default static private LAN IP address.
 - Set `RADIOACTIVE_FOOT_PI_WAN` to `true`, `1`, `yes`, or `on` to add a bridged/public WAN adapter.
 - Set `RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE=true` when enabling WAN to confirm that bridged networking exposes the guest to the host network.
 - Set `RADIOACTIVE_FOOT_PI_WAN_BRIDGE` to the required host bridge name when WAN is enabled.
