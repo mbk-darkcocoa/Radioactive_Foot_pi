@@ -9,6 +9,11 @@ if [[ -z "${API_TOKEN}" ]]; then
   exit 1
 fi
 
+if [[ ! -r "${INPUT_FILE}" ]]; then
+  echo "Input file is missing or not readable: ${INPUT_FILE}" >&2
+  exit 1
+fi
+
 AUTH_SCHEME="Bearer"
 AUTH_HEADER="Authorization: ${AUTH_SCHEME} ${API_TOKEN}"
 
