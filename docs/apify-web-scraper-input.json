@@ -1,0 +1,8 @@
+{
+  "startUrls": [
+    {
+      "url": "https://shop.example.com"
+    }
+  ],
+  "pageFunction": "async function pageFunction(context) { const { $, request } = context; return { url: request.url, products: $('.product').map((i, el) => ({ name: $(el).find('.title').text().trim(), price: $(el).find('.price').text().trim() })).get() }; }"
+}
