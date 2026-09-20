@@ -40,7 +40,7 @@
 
 ### 5) Loveable extension activation
 - Activation toggle: repository variable `LOVEABLE_EXTENSION_ENABLED=true`
-- Validation path: workflow `integrations-health.yml` checks `${LOVEABLE_API_URL}/health` with `LOVEABLE_API_KEY` when enabled.
+- Validation path: workflow `integrations-health.yml` checks `${LOVEABLE_API_URL}/health` with `LOVEABLE_API_KEY` and `X-Loveable-Extension: active` when enabled.
 - MCP entry: `loveable` server in `.mcp.json`.
 
 ## Required repository secrets and variables
