@@ -110,11 +110,16 @@ jobs:
       - name: Verify Loveable integration endpoint
         env:
           LOVEABLE_EXTENSION_ENABLED: ${{ vars.LOVEABLE_EXTENSION_ENABLED }}
+          LOVEABLE_HEALTHCHECK_ENABLED: ${{ vars.LOVEABLE_HEALTHCHECK_ENABLED }}
           LOVEABLE_API_URL: ${{ vars.LOVEABLE_API_URL }}
           LOVEABLE_API_KEY: ${{ secrets.LOVEABLE_API_KEY }}
         run: |
           if [ "${LOVEABLE_EXTENSION_ENABLED}" != "true" ]; then
             echo "::notice::Loveable extension toggle is not enabled; skipping Loveable check."
+            exit 0
+          fi
+          if [ "${LOVEABLE_HEALTHCHECK_ENABLED}" != "true" ]; then
+            echo "::notice::Loveable extension is enabled but health check is not enabled; skipping endpoint probe."
             exit 0
           fi
 

@@ -40,7 +40,7 @@
 
 ### 5) Loveable extension activation
 - Activation toggle: repository variable `LOVEABLE_EXTENSION_ENABLED=true`
-- Validation path: workflow `integrations-health.yml` checks `${LOVEABLE_API_URL}/health` with `LOVEABLE_API_KEY` and `X-Loveable-Extension: active` when enabled.
+- Validation path: workflow `integrations-health.yml` checks `${LOVEABLE_API_URL}/health` with `LOVEABLE_API_KEY` and `X-Loveable-Extension: active` only when both `LOVEABLE_EXTENSION_ENABLED=true` and `LOVEABLE_HEALTHCHECK_ENABLED=true`.
 - MCP entry: `loveable` server in `.mcp.json`.
 
 ## Required repository secrets and variables
@@ -58,6 +58,7 @@
 - `GEMINI_MODEL` (default `gemini-2.5-flash`)
 - `GOOGLE_CSE_ID`
 - `LOVEABLE_EXTENSION_ENABLED` (`true` to activate)
+- `LOVEABLE_HEALTHCHECK_ENABLED` (`true` to enforce endpoint probe)
 - `LOVEABLE_API_URL` (Loveable service base URL)
 
 ## Webhook and automation guidance
