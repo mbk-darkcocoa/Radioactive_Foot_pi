@@ -25,9 +25,11 @@ Vagrant.configure("2") do |config|
   end
 
   if WAN_ENABLED
-    public_network_options = {}
-    public_network_options[:bridge] = WAN_BRIDGE if WAN_BRIDGE && !WAN_BRIDGE.empty?
-    config.vm.network "public_network", **public_network_options
+    if WAN_BRIDGE.nil? || WAN_BRIDGE.empty?
+      raise "RADIOACTIVE_FOOT_PI_WAN requires RADIOACTIVE_FOOT_PI_WAN_BRIDGE to avoid interactive network selection"
+    end
+
+    config.vm.network "public_network", bridge: WAN_BRIDGE
   end
 
   config.vm.provider "virtualbox" do |provider|
