@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
       raise "RADIOACTIVE_FOOT_PI_WAN requires RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE=true because bridged networking exposes the guest to the host network"
     end
 
-    if WAN_BRIDGE.nil? || WAN_BRIDGE.empty?
+    if WAN_BRIDGE.nil?
       raise "RADIOACTIVE_FOOT_PI_WAN requires RADIOACTIVE_FOOT_PI_WAN_BRIDGE to avoid interactive network selection"
     end
 
