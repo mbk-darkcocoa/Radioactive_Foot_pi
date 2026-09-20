@@ -1,3 +1,5 @@
+require "ipaddr"
+
 def parse_integer_env(name, default)
   value = Integer(ENV.fetch(name, default), 10)
   raise "#{name} must be greater than 0" if value < 1
@@ -7,12 +9,22 @@ rescue ArgumentError
   raise "#{name} must be a valid integer"
 end
 
+def parse_ipv4_env(name, default)
+  value = ENV.fetch(name, default)
+  ip = IPAddr.new(value)
+  raise "#{name} must be a valid IPv4 address" unless ip.ipv4?
+
+  value
+rescue IPAddr::InvalidAddressError
+  raise "#{name} must be a valid IPv4 address"
+end
+
 VM_CPUS = parse_integer_env("RADIOACTIVE_FOOT_PI_CPUS", "2")
 VM_MEMORY = parse_integer_env("RADIOACTIVE_FOOT_PI_MEMORY", "2048")
 VM_HOSTNAME = ENV.fetch("RADIOACTIVE_FOOT_PI_HOSTNAME", "radioactive-foot-pi")
 VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu").downcase
 LAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_LAN", "true").downcase)
-LAN_IP = ENV.fetch("RADIOACTIVE_FOOT_PI_LAN_IP", "192.168.56.10")
+LAN_IP = parse_ipv4_env("RADIOACTIVE_FOOT_PI_LAN_IP", "192.168.56.10")
 WAN_ACKNOWLEDGED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE", "false").downcase)
 WAN_BRIDGE = ENV["RADIOACTIVE_FOOT_PI_WAN_BRIDGE"]&.strip
 WAN_BRIDGE = nil if WAN_BRIDGE == ""
