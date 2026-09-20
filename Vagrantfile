@@ -15,6 +15,7 @@ LAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_LAN", "t
 LAN_IP = ENV.fetch("RADIOACTIVE_FOOT_PI_LAN_IP", "192.168.56.10")
 WAN_ACKNOWLEDGED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE", "false").downcase)
 WAN_BRIDGE = ENV["RADIOACTIVE_FOOT_PI_WAN_BRIDGE"]&.strip
+WAN_BRIDGE = nil if WAN_BRIDGE == ""
 WAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN", "false").downcase)
 
 BOXES = {
