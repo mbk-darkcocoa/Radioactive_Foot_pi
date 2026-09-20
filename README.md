@@ -4,6 +4,7 @@ A repository for Radioactive_Foot_pi application code and supporting automation 
 ## Vagrant LAN/WAN setup
 
 - `Vagrantfile` creates a VM with a private LAN on `192.168.56.10` by default.
+- Set `RADIOACTIVE_FOOT_PI_LAN_IP` to override the default private LAN address.
 - Set `RADIOACTIVE_FOOT_PI_WAN=true` to add a bridged/public WAN adapter.
 - Set `RADIOACTIVE_FOOT_PI_WAN_BRIDGE` to pin the WAN adapter to a specific host bridge.
 - Set `RADIOACTIVE_FOOT_PI_OS=ubuntu` or `RADIOACTIVE_FOOT_PI_OS=fedora` to choose the base box.
