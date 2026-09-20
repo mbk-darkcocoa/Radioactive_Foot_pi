@@ -1,5 +1,11 @@
-VM_CPUS = ENV.fetch("RADIOACTIVE_FOOT_PI_CPUS", "2").to_i
-VM_MEMORY = ENV.fetch("RADIOACTIVE_FOOT_PI_MEMORY", "2048").to_i
+def parse_integer_env(name, default)
+  Integer(ENV.fetch(name, default), 10)
+rescue ArgumentError
+  raise "#{name} must be a valid integer"
+end
+
+VM_CPUS = parse_integer_env("RADIOACTIVE_FOOT_PI_CPUS", "2")
+VM_MEMORY = parse_integer_env("RADIOACTIVE_FOOT_PI_MEMORY", "2048")
 VM_HOSTNAME = ENV.fetch("RADIOACTIVE_FOOT_PI_HOSTNAME", "radioactive-foot-pi")
 VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu").downcase
 LAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_LAN", "true").downcase)
