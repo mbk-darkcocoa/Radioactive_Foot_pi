@@ -12,7 +12,7 @@ BOXES = {
 }.freeze
 
 box = BOXES.fetch(VM_OS) do
-  raise "Unsupported RADIOACTIVE_FOOT_PI_OS '#{VM_OS}'. Supported values: #{BOXES.keys.join(', ')}"
+  raise "Unsupported RADIOACTIVE_FOOT_PI_OS '#{VM_OS}'. Supported values (case-insensitive): #{BOXES.keys.join(', ')}"
 end
 
 Vagrant.configure("2") do |config|
