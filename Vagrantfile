@@ -1,5 +1,8 @@
 def parse_integer_env(name, default)
-  Integer(ENV.fetch(name, default), 10)
+  value = Integer(ENV.fetch(name, default), 10)
+  raise "#{name} must be greater than 0" if value < 1
+
+  value
 rescue ArgumentError
   raise "#{name} must be a valid integer"
 end
