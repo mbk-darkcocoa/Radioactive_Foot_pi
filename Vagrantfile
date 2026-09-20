@@ -10,6 +10,7 @@ VM_HOSTNAME = ENV.fetch("RADIOACTIVE_FOOT_PI_HOSTNAME", "radioactive-foot-pi")
 VM_OS = ENV.fetch("RADIOACTIVE_FOOT_PI_OS", "ubuntu").downcase
 LAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_LAN", "true").downcase)
 LAN_IP = ENV.fetch("RADIOACTIVE_FOOT_PI_LAN_IP", "192.168.56.10")
+WAN_ACKNOWLEDGED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE", "false").downcase)
 WAN_BRIDGE = ENV["RADIOACTIVE_FOOT_PI_WAN_BRIDGE"]
 WAN_ENABLED = %w[1 true yes on].include?(ENV.fetch("RADIOACTIVE_FOOT_PI_WAN", "false").downcase)
 
@@ -31,6 +32,10 @@ Vagrant.configure("2") do |config|
   end
 
   if WAN_ENABLED
+    unless WAN_ACKNOWLEDGED
+      raise "RADIOACTIVE_FOOT_PI_WAN requires RADIOACTIVE_FOOT_PI_WAN_ACKNOWLEDGE=true because bridged networking exposes the guest to the host network"
+    end
+
     if WAN_BRIDGE.nil? || WAN_BRIDGE.empty?
       raise "RADIOACTIVE_FOOT_PI_WAN requires RADIOACTIVE_FOOT_PI_WAN_BRIDGE to avoid interactive network selection"
     end
